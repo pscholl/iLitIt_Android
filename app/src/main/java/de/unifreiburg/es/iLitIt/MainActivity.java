@@ -1,12 +1,25 @@
 package de.unifreiburg.es.iLitIt;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
 import java.lang.Override;
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 
+import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -25,8 +38,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 
-public class MainActivity extends ActionBarActivity {
-
+public class MainActivity extends FragmentActivity {
+    public static final String USER_INTERACTION_TAG = "iLitIt_UI";
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -41,21 +54,53 @@ public class MainActivity extends ActionBarActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     ViewPager mViewPager;
-
     final String TAG = MainActivity.class.toString();
-
     LighterBluetoothService mBluetoothService;
     String mDeviceAddress;
+
+    private List<Date> mModel = new LinkedList<Date>();
+    private final BroadcastReceiver mBleUpdates = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateModel();
+        }
+    };
+
+    private void updateModel() {
+        try {
+            String filename = LighterBluetoothService.FILENAME;
+            FileInputStream fis = openFileInput (filename);
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+
+            mModel.clear();
+            for (String line=br.readLine(); line!=null; line=br.readLine()) {
+                DateFormat df = DateFormat.getDateInstance();
+                mModel.add(LighterBluetoothService.dateformat.parse(line));
+            }
+            Log.e(USER_INTERACTION_TAG, "added cigarettes via Lighter");
+            modelChanged();
+        } catch(Exception e) {
+            Log.e(TAG, "file read failed", e);
+        }
+    }
+
+    private IntentFilter updateBleFilter() {
+        IntentFilter blaa = new IntentFilter();
+        blaa.addAction(LighterBluetoothService.IACTION);
+        return blaa;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mBleUpdates);
+        unbindService(mServiceConnection);
+    }
 
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             mBluetoothService = ((LighterBluetoothService.LocalBinder) service).getService();
-            if (!mBluetoothService.initialize()) {
-                Log.e(TAG, "unable to initialize Lighter Bluetooth Service!");
-                finish();
-            }
-            mBluetoothService.connect(mDeviceAddress);
         }
 
         @Override
@@ -69,6 +114,12 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -77,40 +128,29 @@ public class MainActivity extends ActionBarActivity {
         mViewPager = (ViewPager) findViewById(R.id.pager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
-        // First check if we have a lighter already, if not start the scanner
-        if (mDeviceAddress == null) {
-            Intent intent = new Intent(this, BluetoothScanActivity.class);
-            startActivity(intent);
-        } else {
-            // Set up the service connection for the lighter.
-            Intent intent = new Intent(this, LighterBluetoothService.class);
-            bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
+        // Set up the service connection for the lighter.
+        Intent intent = new Intent(this, LighterBluetoothService.class);
+        startService(intent); // make sure it lives on
+        bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
+
+        // and wire the intent updates
+        registerReceiver(mBleUpdates, updateBleFilter());
+        updateModel();
+    }
+
+    public void modelChanged() {
+        // let all active fragments know that something happened, this is crazy
+        if (getSupportFragmentManager()==null || getSupportFragmentManager().getFragments()==null)
+            return;
+
+        for(Fragment f : getSupportFragmentManager().getFragments()) {
+            ((CigModelListener) f).cigModelChanged();
         }
     }
 
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+    public interface CigModelListener {
+        public void cigModelChanged();
     }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
@@ -126,7 +166,16 @@ public class MainActivity extends ActionBarActivity {
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(position + 1);
+            switch(position) {
+                case 0:
+                    return HomescreenFragment.newInstance(mModel);
+                case 1:
+                    return JournalFragment.newInstance(mModel);
+                case 2:
+                    return SettingsFragment.newInstance(mModel, mBluetoothService);
+                default:
+                    return PlaceholderFragment.newInstance(position + 1);
+            }
         }
 
         @Override
@@ -140,7 +189,7 @@ public class MainActivity extends ActionBarActivity {
             Locale l = Locale.getDefault();
             switch (position) {
                 case 0:
-                    return getString(R.string.title_section1).toUpperCase(l);
+                    return "Section 1".toUpperCase(l);
                 case 1:
                     return getString(R.string.title_section2).toUpperCase(l);
                 case 2:
@@ -153,7 +202,7 @@ public class MainActivity extends ActionBarActivity {
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment {
+    public static class PlaceholderFragment extends Fragment implements CigModelListener{
         /**
          * The fragment argument representing the section number for this
          * fragment.
@@ -180,6 +229,11 @@ public class MainActivity extends ActionBarActivity {
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
             return rootView;
+        }
+
+        @Override
+        public void cigModelChanged() {
+
         }
     }
 

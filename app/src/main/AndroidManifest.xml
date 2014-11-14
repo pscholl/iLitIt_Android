@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
     <application
         android:allowBackup="true"
@@ -17,16 +19,15 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <intent-filter>
+                <action android:name="de.unifreiburg.es.iLitIt.CIGARETTES"/>
+            </intent-filter>
         </activity>
 
         <service
             android:name="de.unifreiburg.es.iLitIt.LighterBluetoothService"
             android:enabled="true" />
-
-        <activity
-            android:name="de.unifreiburg.es.iLitIt.BluetoothScanActivity"
-            android:label="@string/title_activity_bluetooth_scan" >
-        </activity>
     </application>
 
 </manifest>
