@@ -17,13 +17,19 @@ import java.util.List;
 /**
  * Created by phil on 11/18/14.
  */
-public class JournalFragment extends Fragment implements MainActivity.CigModelListener {
+public class JournalFragment extends Fragment {
     private static JournalFragment mFragment;
-    private List<Date> mModel;
+    private ObservableLinkedList<Date> mModel;
     private ViewGroup mRootView;
     private JournalAdapter mAdapter;
+    private Runnable rUpdateFields = new Runnable() {
+        @Override
+        public void run() {
+            mAdapter.notifyDataSetChanged();
+        }
+    };
 
-    public static JournalFragment newInstance(List<Date> mModel) {
+    public static JournalFragment newInstance(ObservableLinkedList<Date> mModel) {
         mFragment = new JournalFragment();
         mFragment.mModel = mModel;
         return mFragment;
@@ -39,6 +45,8 @@ public class JournalFragment extends Fragment implements MainActivity.CigModelLi
         if (mRootView==null) {
             mRootView = (ViewGroup) inflater.inflate(R.layout.journal_fragment, container, false);
 
+            mModel.register(new DelayedObserver(DelayedObserver.DEFAULT_DELAY, rUpdateFields));
+
             ListView elv = (ListView) mRootView.findViewById(R.id.journal_list_view);
             mAdapter = new JournalAdapter(getActivity(), R.layout.journal_list_item, mModel);
             elv.setAdapter(mAdapter);
@@ -48,8 +56,6 @@ public class JournalFragment extends Fragment implements MainActivity.CigModelLi
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     Date d = (Date) parent.getItemAtPosition(position);
                     mAdapter.remove(d);
-                    ((MainActivity) getActivity()).modelChanged(); // horrible and necessary
-
                     Log.e(MainActivity.USER_INTERACTION_TAG, "removed cigarette via Journal");
                 }
             });
@@ -59,11 +65,6 @@ public class JournalFragment extends Fragment implements MainActivity.CigModelLi
         }
 
         return mRootView;
-    }
-
-    @Override
-    public void cigModelChanged() {
-        mAdapter.notifyDataSetChanged();
     }
 
     private class JournalAdapter extends ArrayAdapter<Date> {

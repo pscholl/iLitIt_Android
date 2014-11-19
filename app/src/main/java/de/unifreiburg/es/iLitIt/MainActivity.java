@@ -58,53 +58,33 @@ public class MainActivity extends FragmentActivity {
     LighterBluetoothService mBluetoothService;
     String mDeviceAddress;
 
-    private List<Date> mModel = new LinkedList<Date>();
-    private final BroadcastReceiver mBleUpdates = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            updateModel();
-        }
-    };
-
-    private void updateModel() {
-        try {
-            String filename = LighterBluetoothService.FILENAME;
-            FileInputStream fis = openFileInput (filename);
-            BufferedReader br = new BufferedReader(new InputStreamReader(fis));
-
-            mModel.clear();
-            for (String line=br.readLine(); line!=null; line=br.readLine()) {
-                DateFormat df = DateFormat.getDateInstance();
-                mModel.add(LighterBluetoothService.dateformat.parse(line));
-            }
-            Log.e(USER_INTERACTION_TAG, "added cigarettes via Lighter");
-            modelChanged();
-        } catch(Exception e) {
-            Log.e(TAG, "file read failed", e);
-        }
-    }
-
-    private IntentFilter updateBleFilter() {
-        IntentFilter blaa = new IntentFilter();
-        blaa.addAction(LighterBluetoothService.IACTION);
-        return blaa;
-    }
-
+    private ObservableLinkedList<Date> mModel = new ObservableLinkedList<Date>();
     @Override
     protected void onPause() {
         super.onPause();
-        unregisterReceiver(mBleUpdates);
         unbindService(mServiceConnection);
     }
 
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
+            // get the bluetooth service and its attached model, all fragments
+            // informed about model changes by attaching an observer to this model
             mBluetoothService = ((LighterBluetoothService.LocalBinder) service).getService();
+            mModel = mBluetoothService.getModel();
+
+            // Create the adapter that will return a fragment for each of the three
+            // primary sections of the activity.
+            mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+            // Set up the ViewPager with the sections adapter.
+            mViewPager = (ViewPager) findViewById(R.id.pager);
+            mViewPager.setAdapter(mSectionsPagerAdapter);
         }
 
         @Override
-        public void onServiceDisconnected(ComponentName componentName) {
+        public void onServiceDisconnected(ComponentName componentName)
+        {
             mBluetoothService = null;
         }
     };
@@ -113,45 +93,18 @@ public class MainActivity extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        // Create the adapter that will return a fragment for each of the three
-        // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
-
-        // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.pager);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
-
-        // Set up the service connection for the lighter.
+        // Set up the service connection for the lighter and initialize
+        // UI once connected to this service.
         Intent intent = new Intent(this, LighterBluetoothService.class);
         startService(intent); // make sure it lives on
         bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
-
-        // and wire the intent updates
-        registerReceiver(mBleUpdates, updateBleFilter());
-        updateModel();
     }
-
-    public void modelChanged() {
-        // let all active fragments know that something happened, this is crazy
-        if (getSupportFragmentManager()==null || getSupportFragmentManager().getFragments()==null)
-            return;
-
-        for(Fragment f : getSupportFragmentManager().getFragments()) {
-            ((CigModelListener) f).cigModelChanged();
-        }
-    }
-
-    public interface CigModelListener {
-        public void cigModelChanged();
-    }
-
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
@@ -202,7 +155,7 @@ public class MainActivity extends FragmentActivity {
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment implements CigModelListener{
+    public static class PlaceholderFragment extends Fragment {
         /**
          * The fragment argument representing the section number for this
          * fragment.
@@ -229,11 +182,6 @@ public class MainActivity extends FragmentActivity {
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
             return rootView;
-        }
-
-        @Override
-        public void cigModelChanged() {
-
         }
     }
 

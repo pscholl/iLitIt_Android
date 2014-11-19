@@ -20,44 +20,44 @@ import java.util.List;
 /**
  * Created by phil on 11/17/14.
  */
-public class HomescreenFragment extends Fragment  implements MainActivity.CigModelListener{
+public class HomescreenFragment extends Fragment {
 
     private static final long FIELD_DELAY = 100;
     private static HomescreenFragment mFragment;
     private final Handler mHandler;
-    private List<Date> mModel;
+    private ObservableLinkedList<Date> mModel;
     private int mTimeAgo = 0;
     private Runnable rUpdateFields = new Runnable() {
         @Override
         public void run() {
             TextView timeago = (TextView) mRootView.findViewById(R.id.timeago),
-                     total = (TextView) mRootView.findViewById(R.id.total_amount),
-                     since = (TextView) mRootView.findViewById(R.id.trackingsince),
-                     nicotine = (TextView) mRootView.findViewById(R.id.estimation),
-                     mean = (TextView) mRootView.findViewById(R.id.meandaily);
+                    total = (TextView) mRootView.findViewById(R.id.total_amount),
+                    since = (TextView) mRootView.findViewById(R.id.trackingsince),
+                    nicotine = (TextView) mRootView.findViewById(R.id.estimation),
+                    mean = (TextView) mRootView.findViewById(R.id.meandaily);
 
             mHandler.postDelayed(rUpdateFields, FIELD_DELAY);
 
-            if (timeago==null || total==null || since==null || nicotine==null || mean==null ||
-                mModel == null) {
+            if (timeago == null || total == null || since == null || nicotine == null || mean == null ||
+                    mModel == null) {
                 return;
             }
 
             total.setText(
-                    String.format("%d cigarettes%s", mModel.size(), mModel.size()>1 ? "s" : "" ));
+                    String.format("%d cigarettes%s", mModel.size(), mModel.size() > 1 ? "s" : ""));
 
-            since.setText( StatsHelper.tracking_since(mModel) );
-            timeago.setText( StatsHelper.last_cigarette_at(mModel) );
+            since.setText(StatsHelper.tracking_since(mModel));
+            timeago.setText(StatsHelper.last_cigarette_at(mModel));
 
-            nicotine.setText( String.format("%.2f", StatsHelper.current_nicotine(mModel)) );
-            mean.setText( String.format("%.2f", StatsHelper.mean_cigs_per_day(mModel)) );
+            nicotine.setText(String.format("%.2f", StatsHelper.current_nicotine(mModel)));
+            mean.setText(String.format("%.2f", StatsHelper.mean_cigs_per_day(mModel)));
 
         }
     };
 
     private ViewGroup mRootView;
 
-    public static HomescreenFragment newInstance(List<Date> model) {
+    public static HomescreenFragment newInstance(ObservableLinkedList<Date> model) {
         mFragment = new HomescreenFragment();
         mFragment.mModel = model;
         return mFragment;
@@ -77,15 +77,14 @@ public class HomescreenFragment extends Fragment  implements MainActivity.CigMod
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if (mRootView==null) {
-            mRootView = (ViewGroup) inflater.inflate(R.layout.homescreen_fragment, container, false);
+        if (mRootView == null) {
+            mRootView = (ViewGroup) inflater.inflate(R.layout.homescreen_fragment, container, false);;
 
             Button button = (Button) mRootView.findViewById(R.id.justhadonebutton);
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     mModel.add(new Date());
-                    ((MainActivity) getActivity()).modelChanged();
                     Log.e(MainActivity.USER_INTERACTION_TAG, "added cigarette via HomeScreen");
                 }
             });
@@ -107,8 +106,4 @@ public class HomescreenFragment extends Fragment  implements MainActivity.CigMod
             mHandler.removeCallbacks(rUpdateFields);
     }
 
-    @Override
-    public void cigModelChanged() {
-        // do nothing, is done automatically based on time.
-    }
 }

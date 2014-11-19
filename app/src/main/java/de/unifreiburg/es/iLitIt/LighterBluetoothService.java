@@ -44,6 +44,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -57,6 +58,7 @@ public class LighterBluetoothService extends Service {
     public static final String EXTRA_ARRAY_OF_10_CIGARETTES = "last10cigs";
     public static final String EXTRA_FILE_URI = "fileuri";
     public static final String IACTION = "de.unifreiburg.es.iLitIt.CIGARETTES";
+    private static final long LIST_WRITE_DELAY = 1500;
     public String KEY_SCANSTARTDELAY = "scan_timeout";
     public static final DateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
@@ -74,7 +76,7 @@ public class LighterBluetoothService extends Service {
     public final static UUID UUID_CCC =
             UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
-    private ArrayList<Date> mEventList = new ArrayList<Date>();
+    private ObservableLinkedList<Date> mEventList = new ObservableLinkedList<Date>();
 
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         @Override
@@ -129,6 +131,27 @@ public class LighterBluetoothService extends Service {
         }
     };
 
+    public java.lang.Runnable rListWrite = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                FileOutputStream fos = openFileOutput(FILENAME, MODE_PRIVATE);
+
+                for (Date d : mEventList) {
+                    fos.write(dateformat.format(d).getBytes("utf-8"));
+                    fos.write("\n".getBytes("utf-8"));
+                }
+
+                fos.close();
+            } catch (Exception e) {
+                Log.e(TAG, "unable to write ", e);
+            }
+
+            Log.i(TAG, "succesfully written cigs to " + FILENAME);
+        }
+    };
+    private static boolean serviceIsInitialized = false;
+
     private void broadcastUpdate(final String action) {
         final Intent intent = new Intent(action);
         sendBroadcast(intent);
@@ -150,19 +173,24 @@ public class LighterBluetoothService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         // For API level 18 and above, get a reference to BluetoothAdapter through
         // BluetoothManager.
+        if (serviceIsInitialized)
+            return START_NOT_STICKY;
+
         if (mBluetoothManager == null) {
             mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
             if (mBluetoothManager == null) {
                 Log.e(TAG, "Unable to initialize BluetoothManager.");
-                return START_STICKY;
+                return START_NOT_STICKY;
             }
         }
 
         mBluetoothAdapter = mBluetoothManager.getAdapter();
         if (mBluetoothAdapter == null) {
             Log.e(TAG, "Unable to obtain a BluetoothAdapter.");
-            return START_STICKY;
+            return START_NOT_STICKY;
         }
+
+        serviceIsInitialized = true;
 
         PreferenceManager.getDefaultSharedPreferences(this).edit().clear().apply();
 
@@ -176,7 +204,30 @@ public class LighterBluetoothService extends Service {
         mHandler.postDelayed(mStartLEScan, 10);
 
         super.onStartCommand(intent, flags, startId);
+
+        /** load the stored events */
+        try {
+            FileInputStream fis = openFileInput(FILENAME);
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+            String line;
+
+            while ((line=br.readLine())!=null) {
+                Date d = dateformat.parse(line);
+                mEventList.add(d);
+            }
+        } catch(Exception e) {
+            Log.e(TAG, "file load failed",e);
+        }
+
+        /** add an observer to the model that store the list after a change has occured,
+         * and after a certain delay to avoid to much delay for event handling. */
+        mEventList.register(new DelayedObserver(1500,rListWrite));
+
         return START_STICKY;
+    }
+
+    public ObservableLinkedList<Date> getModel() {
+        return mEventList;
     }
 
     public class LocalBinder extends Binder {
@@ -193,6 +244,7 @@ public class LighterBluetoothService extends Service {
     @Override
     public void onDestroy() {
         Log.e(TAG, "service destroyed");
+        serviceIsInitialized=false;
         super.onDestroy();
     }
 
@@ -217,6 +269,7 @@ public class LighterBluetoothService extends Service {
         }
         // use auto-connect, whenever possible
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
+
         Log.d(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
         return true;
@@ -240,41 +293,13 @@ public class LighterBluetoothService extends Service {
         if (mEventList.size() == 0)
             return;
 
-
-        try {
-            FileOutputStream fos = openFileOutput(FILENAME, MODE_APPEND);
-
-            for (Date d : mEventList) {
-                fos.write(dateformat.format(d).getBytes("utf-8"));
-                fos.write("\n".getBytes("utf-8"));
-            }
-
-            fos.close();
-            mEventList.clear();
-        } catch (Exception e) {
-            Log.e(TAG, "unable to write ", e);
-        }
-
         LinkedList<String> li = new LinkedList<String>();
-        String urloffile = FILENAME;
-
-        try {
-            FileInputStream fis = openFileInput (FILENAME);
-            BufferedReader br = new BufferedReader(new InputStreamReader(fis));
-
-            for (String line=br.readLine(); line!=null; line=br.readLine()) {
-                li.add(line);
-
-                if (li.size() > 10)
-                    li.remove(0);
-            }
-        } catch(Exception e){
-            Log.e(TAG, "file read failed", e);
-        }
+        for (int i = mEventList.size() > 10 ? 10 : mEventList.size(); i > 0; i--)
+            li.add(mEventList.get(mEventList.size() - i).toString());
 
         Intent info = new Intent(IACTION);
         info.putExtra(EXTRA_ARRAY_OF_10_CIGARETTES, li.toArray(new String[li.size()]));
-        info.putExtra(EXTRA_FILE_URI, urloffile);
+        info.putExtra(EXTRA_FILE_URI, FILENAME);
         info.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
         sendBroadcast(info);
 

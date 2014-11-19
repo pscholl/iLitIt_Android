@@ -1,6 +1,5 @@
 package de.unifreiburg.es.iLitIt;
 
-import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -11,26 +10,31 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
 import java.util.Date;
-import java.util.List;
 
 /**
  * Created by phil on 11/18/14.
  */
-public class SettingsFragment extends Fragment implements MainActivity.CigModelListener {
-    private List<Date> mModel;
+public class SettingsFragment extends Fragment {
+    private ObservableLinkedList<Date> mModel;
     private LighterBluetoothService mServiceconnection;
     private Button mClear;
     private TextView mMacAddr;
+    private Runnable rUpdateFields = new Runnable() {
+        @Override
+        public void run() {
+            mMacAddr.setText(mServiceconnection.get_mac_addr());
+        }
+    };
+    private View mRootView = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRetainInstance(true);
     }
 
-    public static SettingsFragment newInstance(List<Date> m, LighterBluetoothService s) {
+    public static SettingsFragment newInstance(ObservableLinkedList<Date> m, LighterBluetoothService s) {
         SettingsFragment mFragment = new SettingsFragment();
         mFragment.mModel = m;
         mFragment.mServiceconnection = s;
@@ -39,31 +43,33 @@ public class SettingsFragment extends Fragment implements MainActivity.CigModelL
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View mRootView = inflater.inflate(R.layout.settings_fragment, container, false);
+        if (mRootView==null) {
+            mRootView = inflater.inflate(R.layout.settings_fragment, container, false);
 
-        mClear = (Button) mRootView.findViewById(R.id.cleardatabutton);
-        mClear.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.e(MainActivity.USER_INTERACTION_TAG, "cleared all cigarettes from Settings");
-                mModel.clear();
-                ((MainActivity) getActivity()).modelChanged();
-            }
-        });
+            //mModel.register(new DelayedObserver(DelayedObserver.DEFAULT_DELAY, rUpdateFields));
 
-        mMacAddr = (TextView) mRootView.findViewById(R.id.macaddr);
-        mMacAddr.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mServiceconnection.clear_mac_addr();
-            }
-        });
-        mMacAddr.setText(mServiceconnection.get_mac_addr());
+            mClear = (Button) mRootView.findViewById(R.id.cleardatabutton);
+            mClear.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Log.e(MainActivity.USER_INTERACTION_TAG, "cleared all cigarettes from Settings");
+                    mModel.clear();
+                }
+            });
+
+            mMacAddr = (TextView) mRootView.findViewById(R.id.macaddr);
+            mMacAddr.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    mServiceconnection.clear_mac_addr();
+                }
+            });
+            mMacAddr.setText(mServiceconnection.get_mac_addr());
+        }  else { // on config (i.e. screen rotation, the view is still attached)
+            ViewGroup parent = (ViewGroup) mRootView.getParent();
+            parent.removeView(mRootView);
+        }
+
         return mRootView;
-    }
-
-    @Override
-    public void cigModelChanged() {
-        mMacAddr.setText(mServiceconnection.get_mac_addr());
     }
 }
