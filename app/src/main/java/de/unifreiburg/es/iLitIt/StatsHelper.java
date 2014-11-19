@@ -32,7 +32,7 @@ public class StatsHelper {
 
     public static String tracking_since(List<Date> mModel) {
         if (mModel.size()==0)
-            return "";
+            return "never";
         return time_diff(new Date(), mModel.get(0));
     }
 

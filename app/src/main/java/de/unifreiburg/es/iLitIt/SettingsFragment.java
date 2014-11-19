@@ -46,7 +46,7 @@ public class SettingsFragment extends Fragment {
         if (mRootView==null) {
             mRootView = inflater.inflate(R.layout.settings_fragment, container, false);
 
-            //mModel.register(new DelayedObserver(DelayedObserver.DEFAULT_DELAY, rUpdateFields));
+            mModel.register(new DelayedObserver(10, rUpdateFields));
 
             mClear = (Button) mRootView.findViewById(R.id.cleardatabutton);
             mClear.setOnClickListener(new View.OnClickListener() {

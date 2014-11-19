@@ -159,7 +159,9 @@ public class LighterBluetoothService extends Service {
 
     public void clear_mac_addr() {
         mBluetoothDeviceAddress = null;
-        broadcastUpdate(IACTION);
+        PreferenceManager.getDefaultSharedPreferences(LighterBluetoothService.this).edit().
+                putString(KEY_DEVICEADDR, mBluetoothDeviceAddress).apply();
+        mEventList.fireEvent();
     }
 
     public String get_mac_addr() {
@@ -192,7 +194,8 @@ public class LighterBluetoothService extends Service {
 
         serviceIsInitialized = true;
 
-        PreferenceManager.getDefaultSharedPreferences(this).edit().clear().apply();
+        // for DEBUGGING only
+        // PreferenceManager.getDefaultSharedPreferences(this).edit().clear().apply();
 
         /** check if we are already bound to a device, if not start scanning for one */
         mBluetoothDeviceAddress = PreferenceManager.getDefaultSharedPreferences(this).
