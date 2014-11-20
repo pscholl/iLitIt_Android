@@ -25,8 +25,10 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.Handler;
@@ -151,6 +153,7 @@ public class LighterBluetoothService extends Service {
         }
     };
     private static boolean serviceIsInitialized = false;
+    private BroadcastReceiver mBluetoothChangeReceiver;
 
     private void broadcastUpdate(final String action) {
         final Intent intent = new Intent(action);
@@ -173,6 +176,20 @@ public class LighterBluetoothService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (mBluetoothChangeReceiver == null) {
+            mBluetoothChangeReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    serviceIsInitialized = false;
+                    onStartCommand(null, 0, 0);
+                }
+            };
+
+            IntentFilter mif = new IntentFilter();
+            mif.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+            registerReceiver(mBluetoothChangeReceiver, mif);
+        }
+
         // For API level 18 and above, get a reference to BluetoothAdapter through
         // BluetoothManager.
         if (serviceIsInitialized)
@@ -308,7 +325,6 @@ public class LighterBluetoothService extends Service {
 
         Log.e(TAG, info.toString());
     }
-
 
     private Runnable mStartLEScan = new Runnable() {
         @Override
