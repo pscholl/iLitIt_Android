@@ -84,6 +84,11 @@ public class LighterBluetoothService extends Service {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             String intentAction;
+            if (mBluetoothGatt==null) {
+                Log.e(TAG, "problem problem");
+                mBluetoothGatt = gatt;
+            }
+
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 Log.i(TAG, "Connected to GATT server. " + status);
                 mBluetoothGatt.discoverServices();
@@ -128,7 +133,7 @@ public class LighterBluetoothService extends Service {
 
             Date date = new Date(System.currentTimeMillis() - diff);
             Log.w(TAG, "got event at " + date);
-            
+
             mEventList.add(date);
         }
     };
@@ -180,7 +185,7 @@ public class LighterBluetoothService extends Service {
             mBluetoothChangeReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
-                    serviceIsInitialized = false;
+                    close();
                     onStartCommand(null, 0, 0);
                 }
             };
@@ -290,7 +295,7 @@ public class LighterBluetoothService extends Service {
         // use auto-connect, whenever possible
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
 
-        Log.d(TAG, "Trying to create a new connection.");
+        Log.d(TAG, "Trying to create a new connection. ");
         mBluetoothDeviceAddress = address;
         return true;
     }
@@ -304,9 +309,12 @@ public class LighterBluetoothService extends Service {
     }
 
     public void close() {
+        Log.e(TAG, "connection closed.");
+
         if (mBluetoothGatt == null) {
             return;
         }
+
         mBluetoothGatt.close();
         mBluetoothGatt = null;
 
@@ -324,13 +332,14 @@ public class LighterBluetoothService extends Service {
         sendBroadcast(info);
 
         Log.e(TAG, info.toString());
+
+        mHandler.postDelayed(mStartLEScan, mScanStartDelay);
     }
 
     private Runnable mStartLEScan = new Runnable() {
         @Override
         public void run() {
             Log.i(TAG, "starting LE/Lighter Scan.");
-            if (mBluetoothGatt != null) close();
             mBluetoothAdapter.startLeScan(mFindLighterDevice);
         }
     };
@@ -357,7 +366,7 @@ public class LighterBluetoothService extends Service {
                 mBluetoothAdapter.stopLeScan(this);
                 connect(mBluetoothDeviceAddress);
 
-                mHandler.postDelayed(mStartLEScan, mScanStartDelay);
+                //mHandler.postDelayed(mStartLEScan, mScanStartDelay);
                 //mHandler.postDelayed(stopLEScan, timeout_ms)
             }
     };
