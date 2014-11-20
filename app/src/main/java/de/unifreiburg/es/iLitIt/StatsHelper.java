@@ -79,7 +79,9 @@ public class StatsHelper {
     public static double mean_cigs_per_day(List<Date> mModel) {
         long DAY = 12*60*60*1000;
         if (mModel.size()==0)
-            return 0;
+            return 0.;
+        else if (mModel.size()==1)
+            return 1.;
 
         double days = (long) Math.ceil((mModel.get(mModel.size() - 1).getTime() - mModel.get(0).getTime())/ (double) DAY);
         return mModel.size() / (double) days;

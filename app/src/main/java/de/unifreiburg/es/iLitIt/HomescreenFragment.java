@@ -88,6 +88,16 @@ public class HomescreenFragment extends Fragment {
                     Log.e(MainActivity.USER_INTERACTION_TAG, "added cigarette via HomeScreen");
                 }
             });
+
+            button = (Button) mRootView.findViewById(R.id.forget_lastone);
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mModel.size() > 0)
+                        mModel.remove( mModel.getLast() );
+                    Log.e(MainActivity.USER_INTERACTION_TAG, "removed cigarette via HomeScreen");
+                }
+            });
         } else { // on config (i.e. screen rotation, the view is still attached)
             ViewGroup parent = (ViewGroup) mRootView.getParent();
             parent.removeView(mRootView);

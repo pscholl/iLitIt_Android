@@ -236,6 +236,15 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="@dimen/list_margin" />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/foget_lastone"
+        android:id="@+id/forget_lastone"
+        android:layout_alignParentTop="false"
+        android:layout_below="@+id/justhadonebutton"
+        android:layout_centerHorizontal="true" />
+
 
 </RelativeLayout>
     </ScrollView>

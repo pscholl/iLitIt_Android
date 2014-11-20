@@ -16,5 +16,6 @@
     <string name="lightermacaddr">connected lighter</string>
     <string name="connectedlighter_none">none</string>
     <string name="clear_all_data">clear all data</string>
+    <string name="foget_lastone">forget last cigarette</string>
 
 </resources>
