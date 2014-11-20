@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Locale;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -98,6 +99,12 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        // make sure that bluetooth is enable before trying to start our connection
+        if (!BluetoothAdapter.getDefaultAdapter().isEnabled()) {
+            Intent enableBt = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBt, 0);
+        }
 
         // Set up the service connection for the lighter and initialize
         // UI once connected to this service.

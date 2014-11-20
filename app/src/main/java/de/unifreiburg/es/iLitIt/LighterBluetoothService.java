@@ -176,7 +176,7 @@ public class LighterBluetoothService extends Service {
         // For API level 18 and above, get a reference to BluetoothAdapter through
         // BluetoothManager.
         if (serviceIsInitialized)
-            return START_NOT_STICKY;
+            return START_STICKY;
 
         if (mBluetoothManager == null) {
             mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
