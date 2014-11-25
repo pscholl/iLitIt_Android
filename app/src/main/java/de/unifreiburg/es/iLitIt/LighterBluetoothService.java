@@ -347,10 +347,14 @@ public class LighterBluetoothService extends Service {
     private final BluetoothAdapter.LeScanCallback mFindLighterDevice =
         new BluetoothAdapter.LeScanCallback() {
             public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+                if (device.getName() == null)
+                    return;
+
                 Log.i(TAG, "found device " + device.getName() + " with rssi" + rssi);
 
                 if (!device.getName().contains("iLitIt"))
                     return; // must be something else
+
 
                 if (mBluetoothDeviceAddress != null &&
                     !mBluetoothDeviceAddress.equals(device.getAddress()))
