@@ -29,6 +29,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.location.Location;
+import android.location.LocationProvider;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -59,7 +61,6 @@ public class LighterBluetoothService extends Service {
     public static final String IACTION = "de.unifreiburg.es.iLitIt.CIGARETTES";
     private static final long LIST_WRITE_DELAY = 1500;
     public String KEY_SCANSTARTDELAY = "scan_timeout";
-    public static final DateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
@@ -75,7 +76,7 @@ public class LighterBluetoothService extends Service {
     public final static UUID UUID_CCC =
             UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
-    private ObservableLinkedList<Date> mEventList = new ObservableLinkedList<Date>();
+    private ObservableLinkedList<CigaretteEvent> mEventList = new ObservableLinkedList<CigaretteEvent>();
 
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         @Override
@@ -131,7 +132,8 @@ public class LighterBluetoothService extends Service {
             Date date = new Date(System.currentTimeMillis() - diff);
             Log.w(TAG, "got event at " + date);
 
-            mEventList.add(date);
+            Location location = null; // XXX
+            mEventList.add( new CigaretteEvent(date, location) );
         }
     };
 
@@ -141,8 +143,8 @@ public class LighterBluetoothService extends Service {
             try {
                 FileOutputStream fos = openFileOutput(FILENAME, MODE_PRIVATE);
 
-                for (Date d : mEventList) {
-                    fos.write(dateformat.format(d).getBytes("utf-8"));
+                for (CigaretteEvent ev : mEventList) {
+                    fos.write(ev.toString().getBytes("utf-8"));
                     fos.write("\n".getBytes("utf-8"));
                 }
 
@@ -233,10 +235,8 @@ public class LighterBluetoothService extends Service {
             BufferedReader br = new BufferedReader(new InputStreamReader(fis));
             String line;
 
-            while ((line=br.readLine())!=null) {
-                Date d = dateformat.parse(line);
-                mEventList.add(d);
-            }
+            while ((line=br.readLine())!=null)
+                mEventList.add( CigaretteEvent.fromString(line) );
         } catch(Exception e) {
             Log.e(TAG, "file load failed",e);
         }
@@ -248,7 +248,7 @@ public class LighterBluetoothService extends Service {
         return START_STICKY;
     }
 
-    public ObservableLinkedList<Date> getModel() {
+    public ObservableLinkedList<CigaretteEvent> getModel() {
         return mEventList;
     }
 
@@ -320,7 +320,7 @@ public class LighterBluetoothService extends Service {
 
         LinkedList<String> li = new LinkedList<String>();
         for (int i = mEventList.size() > 10 ? 10 : mEventList.size(); i > 0; i--)
-            li.add(mEventList.get(mEventList.size() - i).toString());
+            li.add(mEventList.get(mEventList.size() - i).when.toString());
 
         Intent info = new Intent(IACTION);
         info.putExtra(EXTRA_ARRAY_OF_10_CIGARETTES, li.toArray(new String[li.size()]));

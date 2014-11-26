@@ -59,7 +59,7 @@ public class MainActivity extends FragmentActivity {
     LighterBluetoothService mBluetoothService;
     String mDeviceAddress;
 
-    private ObservableLinkedList<Date> mModel = new ObservableLinkedList<Date>();
+    private ObservableLinkedList<CigaretteEvent> mModel = new ObservableLinkedList<CigaretteEvent>();
     @Override
     protected void onPause() {
         super.onPause();
@@ -113,7 +113,7 @@ public class MainActivity extends FragmentActivity {
         bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
     }
 
-    public ObservableLinkedList<Date> getModel() {
+    public ObservableLinkedList<CigaretteEvent> getModel() {
         return mModel;
     }
 

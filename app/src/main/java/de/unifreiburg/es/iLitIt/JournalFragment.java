@@ -18,7 +18,7 @@ import java.util.List;
  * Created by phil on 11/18/14.
  */
 public class JournalFragment extends Fragment {
-    private ObservableLinkedList<Date> mModel;
+    private ObservableLinkedList<CigaretteEvent> mModel;
     private ViewGroup mRootView;
     private JournalAdapter mAdapter;
     private Runnable rUpdateFields = new Runnable() {
@@ -52,8 +52,8 @@ public class JournalFragment extends Fragment {
             elv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Date d = (Date) parent.getItemAtPosition(position);
-                    mAdapter.remove(d);
+                    CigaretteEvent e = (CigaretteEvent) parent.getItemAtPosition(position);
+                    mAdapter.remove(e);
                     Log.e(MainActivity.USER_INTERACTION_TAG, "removed cigarette via Journal");
                 }
             });
@@ -65,13 +65,13 @@ public class JournalFragment extends Fragment {
         return mRootView;
     }
 
-    private class JournalAdapter extends ArrayAdapter<Date> {
-        public JournalAdapter(Context context, int textViewResourceId, List<Date> objects) {
+    private class JournalAdapter extends ArrayAdapter<CigaretteEvent> {
+        public JournalAdapter(Context context, int textViewResourceId, List<CigaretteEvent> objects) {
             super(context, textViewResourceId, objects);
         }
 
         @Override
-        public Date getItem(int position) {
+        public CigaretteEvent getItem(int position) {
             return super.getItem(super.getCount() - 1 - position); // reverse the list
         }
     }

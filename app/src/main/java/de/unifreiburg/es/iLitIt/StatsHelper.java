@@ -30,28 +30,28 @@ public class StatsHelper {
             return "just now";
     }
 
-    public static String tracking_since(List<Date> mModel) {
+    public static String tracking_since(List<CigaretteEvent> mModel) {
         if (mModel.size()==0)
             return "never";
-        return time_diff(new Date(), mModel.get(0));
+        return time_diff(new Date(), mModel.get(0).when);
     }
 
 
-    public static String last_cigarette_at(List<Date> mModel) {
+    public static String last_cigarette_at(List<CigaretteEvent> mModel) {
         if (mModel.size()==0)
             return "never";
-        return time_diff(new Date(), mModel.get(mModel.size()-1));
+        return time_diff(new Date(), mModel.get(mModel.size()-1).when);
     }
 
-    public static double current_nicotine(List<Date> mModel) {
+    public static double current_nicotine(List<CigaretteEvent> mModel) {
         long HALFDAY = new Date().getTime() - 12*60*60*1000;
         LinkedList<Date> last_12_hours = new LinkedList<Date>();
 
-        for (Date d : mModel) {
-            if (d.getTime() < HALFDAY)
+        for (CigaretteEvent e : mModel) {
+            if (e.when.getTime() < HALFDAY)
                 continue;
 
-            last_12_hours.add(d);
+            last_12_hours.add(e.when);
         }
 
         double multidose = 0.;
@@ -76,14 +76,14 @@ public class StatsHelper {
         return N0*ka * (Math.pow(2, -k*minutes_since_dose) - Math.pow(2, -ka*minutes_since_dose)) / (ka-k);
     }
 
-    public static double mean_cigs_per_day(List<Date> mModel) {
+    public static double mean_cigs_per_day(List<CigaretteEvent> mModel) {
         long DAY = 12*60*60*1000;
         if (mModel.size()==0)
             return 0.;
         else if (mModel.size()==1)
             return 1.;
 
-        double days = (long) Math.ceil((mModel.get(mModel.size() - 1).getTime() - mModel.get(0).getTime())/ (double) DAY);
+        double days = (long) Math.ceil((mModel.get(mModel.size() - 1).when.getTime() - mModel.get(0).when.getTime())/ (double) DAY);
         return mModel.size() / (double) days;
     }
 }

@@ -16,7 +16,7 @@ import java.util.Date;
  * Created by phil on 11/18/14.
  */
 public class SettingsFragment extends Fragment {
-    private ObservableLinkedList<Date> mModel;
+    private ObservableLinkedList<CigaretteEvent> mModel;
     private LighterBluetoothService mServiceconnection;
     private Button mClear;
     private TextView mMacAddr;

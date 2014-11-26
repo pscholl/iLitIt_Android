@@ -1,5 +1,6 @@
 package de.unifreiburg.es.iLitIt;
 
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -24,7 +25,7 @@ public class HomescreenFragment extends Fragment {
 
     private static final long FIELD_DELAY = 100;
     private final Handler mHandler;
-    private ObservableLinkedList<Date> mModel;
+    private ObservableLinkedList<CigaretteEvent> mModel;
     private int mTimeAgo = 0;
     private Runnable rUpdateFields = new Runnable() {
         @Override
@@ -82,7 +83,7 @@ public class HomescreenFragment extends Fragment {
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    mModel.add(new Date());
+                    mModel.add(new CigaretteEvent(new Date(), new Location("test"))); // XXX
                     Log.e(MainActivity.USER_INTERACTION_TAG, "added cigarette via HomeScreen");
                 }
             });
