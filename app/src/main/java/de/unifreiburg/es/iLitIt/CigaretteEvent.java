@@ -24,7 +24,7 @@ public class CigaretteEvent {
     }
 
     public static CigaretteEvent fromString(String line) throws ParseException {
-        Location l;
+        Location l = null;
         Date d;
 
         String[] dateandloc = line.split(CSV_SEPARATOR);
@@ -32,18 +32,21 @@ public class CigaretteEvent {
         d = dateformat.parse(dateandloc[0]);
 
         String[] latlon = dateandloc[1].split(" ");
-        if (latlon.length < 1) { throw new ParseException("locatioin too short", 0); }
-
-        l = new Location("file");
-        l.setLatitude(Double.parseDouble(latlon[0]));
-        l.setLongitude(Double.parseDouble(latlon[1]));
+        if (latlon.length > 1) { // if we can't parse -> set l == null
+            l = new Location("file");
+            l.setLatitude(Double.parseDouble(latlon[0]));
+            l.setLongitude(Double.parseDouble(latlon[1]));
+        }
 
         return new CigaretteEvent(d,l);
     }
 
     @Override
     public String toString() {
-        return String.format("%s\t%f %f",
+        if (where == null)
+            return dateformat.format(when);
+        else
+            return String.format("%s\t%f %f",
                 dateformat.format(when),
                 where.getLatitude(),
                 where.getLongitude());

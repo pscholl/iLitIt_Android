@@ -32,11 +32,16 @@ import android.content.IntentFilter;
 import android.location.Location;
 import android.location.LocationProvider;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesClient;
+import com.google.android.gms.location.LocationClient;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -158,6 +163,7 @@ public class LighterBluetoothService extends Service {
     };
     private static boolean serviceIsInitialized = false;
     private BroadcastReceiver mBluetoothChangeReceiver;
+    private LocationClient mLocationClient;
 
     private void broadcastUpdate(final String action) {
         final Intent intent = new Intent(action);
@@ -244,6 +250,12 @@ public class LighterBluetoothService extends Service {
         /** add an observer to the model that store the list after a change has occured,
          * and after a certain delay to avoid to much delay for event handling. */
         mEventList.register(new DelayedObserver(1500,rListWrite));
+
+        /** set-up the location service, we need this to run here, since we need to
+         *access the location whenever there is a chang to the cigarette model. */
+        mLocationClient = new LocationClient(this, mLocationHandler, mLocationHandler);
+        mEventList.register(new DelayedObserver(1000, mLocationHandler));
+
 
         return START_STICKY;
     }
@@ -375,4 +387,58 @@ public class LighterBluetoothService extends Service {
                 //mHandler.postDelayed(stopLEScan, timeout_ms)
             }
     };
+
+    private class MyLocationHandler implements
+            GooglePlayServicesClient.ConnectionCallbacks,
+            GooglePlayServicesClient.OnConnectionFailedListener, Runnable {
+
+        @Override
+        public void onConnected(Bundle bundle) {
+            // we just go through the list of all cigarettes and fill the ones, where
+            // a mock location is set. This way we don't need to get the location everywhere,
+            // but just start the location service on a new event.
+            boolean has_updated = false;
+
+            for (CigaretteEvent e : mEventList) {
+                if (needsLocationUpdate(e.where)) {
+                    e.where = mLocationClient.getLastLocation();
+                    has_updated = true;
+                }
+            }
+
+            mLocationClient.disconnect();
+            if (has_updated) mEventList.fireEvent(); // let everybody know
+        }
+
+        @Override
+        public void onDisconnected() {
+
+        }
+
+        @Override
+        public void onConnectionFailed(ConnectionResult connectionResult) {
+            Log.d(TAG, "connecting to LocationService failed " + connectionResult.toString());
+        }
+
+        @Override
+        public void run() {
+            // called when mEventList has changed
+            for (CigaretteEvent e: mEventList) {
+                if (needsLocationUpdate(e.where)) {
+                    Log.d(TAG, "connecting to LocationService");
+                    mLocationClient.connect();
+                    return;
+                }
+            }
+
+            // make sure that there is no dangling connection
+            mLocationClient.disconnect();
+        }
+
+        private boolean needsLocationUpdate(Location where) {
+            return where==null || where.getProvider()==null || where.getProvider().equals("mock");
+        }
+    }
+
+    private MyLocationHandler mLocationHandler = new MyLocationHandler();
 }

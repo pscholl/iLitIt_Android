@@ -83,7 +83,7 @@ public class HomescreenFragment extends Fragment {
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    mModel.add(new CigaretteEvent(new Date(), new Location("test"))); // XXX
+                    mModel.add(new CigaretteEvent(new Date(), null));
                     Log.e(MainActivity.USER_INTERACTION_TAG, "added cigarette via HomeScreen");
                 }
             });
