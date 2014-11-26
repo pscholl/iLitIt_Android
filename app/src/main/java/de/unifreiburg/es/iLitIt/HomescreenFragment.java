@@ -23,7 +23,6 @@ import java.util.List;
 public class HomescreenFragment extends Fragment {
 
     private static final long FIELD_DELAY = 100;
-    private static HomescreenFragment mFragment;
     private final Handler mHandler;
     private ObservableLinkedList<Date> mModel;
     private int mTimeAgo = 0;
@@ -57,22 +56,21 @@ public class HomescreenFragment extends Fragment {
 
     private ViewGroup mRootView;
 
-    public static HomescreenFragment newInstance(ObservableLinkedList<Date> model) {
-        mFragment = new HomescreenFragment();
-        mFragment.mModel = model;
-        return mFragment;
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+
+        // get the model instance from the main activity, this is ugly, but still seems
+        // to be the cleanest way in Android
+        mModel = ((MainActivity) getActivity()).getModel();
     }
 
     public HomescreenFragment() {
         super();
         mHandler = new Handler();
     }
+
 
     @Nullable
     @Override

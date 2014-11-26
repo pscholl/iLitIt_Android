@@ -32,13 +32,11 @@ public class SettingsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-    }
 
-    public static SettingsFragment newInstance(ObservableLinkedList<Date> m, LighterBluetoothService s) {
-        SettingsFragment mFragment = new SettingsFragment();
-        mFragment.mModel = m;
-        mFragment.mServiceconnection = s;
-        return mFragment;
+        // get the model instance from the main activity, this is ugly, but still seems
+        // to be the cleanest way in Android
+        mModel = ((MainActivity) getActivity()).getModel();
+        mServiceconnection = ((MainActivity) getActivity()).getServiceConnection();
     }
 
     @Override

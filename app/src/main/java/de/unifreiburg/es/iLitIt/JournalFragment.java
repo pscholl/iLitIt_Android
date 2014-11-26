@@ -18,7 +18,6 @@ import java.util.List;
  * Created by phil on 11/18/14.
  */
 public class JournalFragment extends Fragment {
-    private static JournalFragment mFragment;
     private ObservableLinkedList<Date> mModel;
     private ViewGroup mRootView;
     private JournalAdapter mAdapter;
@@ -29,16 +28,15 @@ public class JournalFragment extends Fragment {
         }
     };
 
-    public static JournalFragment newInstance(ObservableLinkedList<Date> mModel) {
-        mFragment = new JournalFragment();
-        mFragment.mModel = mModel;
-        return mFragment;
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+
+        // get the model instance from the main activity, this is ugly, but still seems
+        // to be the cleanest way in Android
+        mModel = ((MainActivity) getActivity()).getModel();
     }
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

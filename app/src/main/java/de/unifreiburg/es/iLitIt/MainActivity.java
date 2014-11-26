@@ -112,6 +112,15 @@ public class MainActivity extends FragmentActivity {
         startService(intent); // make sure it lives on
         bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
     }
+
+    public ObservableLinkedList<Date> getModel() {
+        return mModel;
+    }
+
+    public LighterBluetoothService getServiceConnection() {
+        return mBluetoothService;
+    }
+
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
@@ -128,11 +137,11 @@ public class MainActivity extends FragmentActivity {
             // Return a PlaceholderFragment (defined as a static inner class below).
             switch(position) {
                 case 0:
-                    return HomescreenFragment.newInstance(mModel);
+                    return new HomescreenFragment();
                 case 1:
-                    return JournalFragment.newInstance(mModel);
+                    return new JournalFragment();
                 case 2:
-                    return SettingsFragment.newInstance(mModel, mBluetoothService);
+                    return new SettingsFragment();
                 default:
                     return PlaceholderFragment.newInstance(position + 1);
             }
