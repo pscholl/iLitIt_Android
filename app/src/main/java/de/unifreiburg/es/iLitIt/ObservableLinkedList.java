@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import java.util.LinkedList;
 import java.util.Observer;
@@ -17,6 +18,7 @@ public class ObservableLinkedList<E> extends LinkedList<E> {
 
     public void register(ObservableLinkedList.Observer o) {
         observers.add(o);
+        Log.d(ObservableLinkedList.class.getName(), "new observer registered + " + o.getClass().getName());
     }
     public void unregister(ObservableLinkedList.Observer o)
     {
