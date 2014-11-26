@@ -29,7 +29,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -43,10 +42,8 @@ import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -95,7 +92,7 @@ public class LighterBluetoothService extends Service {
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.i(TAG, "Disconnected from GATT server.");
                 close();
-                mHandler.postDelayed(mStartLEScan, mScanStartDelay);
+                mHandler.postDelayed(rStartLEScan, mScanStartDelay);
             }
         }
 
@@ -226,7 +223,7 @@ public class LighterBluetoothService extends Service {
         /** create a handler on the UI thread */
         mHandler = new Handler(Looper.getMainLooper());
         mScanStartDelay = PreferenceManager.getDefaultSharedPreferences(this).getLong(KEY_SCANSTARTDELAY, 20 * 1000);
-        mHandler.postDelayed(mStartLEScan, 10);
+        mHandler.postDelayed(rStartLEScan, 10);
 
         super.onStartCommand(intent, flags, startId);
 
@@ -333,10 +330,11 @@ public class LighterBluetoothService extends Service {
 
         Log.e(TAG, info.toString());
 
-        mHandler.postDelayed(mStartLEScan, mScanStartDelay);
+        // start a new scan immediately
+        mHandler.postDelayed(rStartLEScan, 10);
     }
 
-    private Runnable mStartLEScan = new Runnable() {
+    private Runnable rStartLEScan = new Runnable() {
         @Override
         public void run() {
             Log.i(TAG, "starting LE/Lighter Scan.");
@@ -347,6 +345,10 @@ public class LighterBluetoothService extends Service {
     private final BluetoothAdapter.LeScanCallback mFindLighterDevice =
         new BluetoothAdapter.LeScanCallback() {
             public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+                // just make sure we don't hang
+                mHandler.removeCallbacks(rStartLEScan);
+                mHandler.postDelayed(rStartLEScan, mScanStartDelay);
+
                 if (device.getName() == null)
                     return;
 
@@ -354,7 +356,6 @@ public class LighterBluetoothService extends Service {
 
                 if (!device.getName().contains("iLitIt"))
                     return; // must be something else
-
 
                 if (mBluetoothDeviceAddress != null &&
                     !mBluetoothDeviceAddress.equals(device.getAddress()))
@@ -366,11 +367,11 @@ public class LighterBluetoothService extends Service {
                             putString(KEY_DEVICEADDR, mBluetoothDeviceAddress).apply();
                 }
 
-                Log.w(TAG, "stopping the scan, found a device " + device.getAddress() );
-                mBluetoothAdapter.stopLeScan(this);
-                connect(mBluetoothDeviceAddress);
+                if ( connect(mBluetoothDeviceAddress) ) {
+                    Log.w(TAG, "stopping the scan, found connectable device " + device.getAddress() );
+                    mBluetoothAdapter.stopLeScan(this);
+                }
 
-                //mHandler.postDelayed(mStartLEScan, mScanStartDelay);
                 //mHandler.postDelayed(stopLEScan, timeout_ms)
             }
     };
