@@ -4,6 +4,7 @@ import android.location.Location;
 import android.util.Log;
 
 import java.text.DateFormat;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -34,8 +35,8 @@ public class CigaretteEvent {
         String[] latlon = dateandloc[1].split(" ");
         if (latlon.length > 1) { // if we can't parse -> set l == null
             l = new Location("file");
-            l.setLatitude(Double.parseDouble(latlon[0]));
-            l.setLongitude(Double.parseDouble(latlon[1]));
+            l.setLatitude( NumberFormat.getInstance().parse(latlon[0]).doubleValue() );
+            l.setLongitude( NumberFormat.getInstance().parse(latlon[1]).doubleValue() );
         }
 
         return new CigaretteEvent(d,l);
