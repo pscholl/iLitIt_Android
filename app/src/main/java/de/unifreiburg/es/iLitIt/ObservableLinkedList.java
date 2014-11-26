@@ -18,12 +18,20 @@ public class ObservableLinkedList<E> extends LinkedList<E> {
 
     public void register(ObservableLinkedList.Observer o) {
         observers.add(o);
-        Log.d(ObservableLinkedList.class.getName(), "new observer registered + " + o.getClass().getName());
+        String klass = o.getClass().getSimpleName();
+
+        if ((klass.contains("Runnable") || klass.contains("DelayedObserver")) && o.getClass().getDeclaringClass()!=null)
+            klass = o.getClass().getDeclaringClass().getName();
+
+        Log.d(ObservableLinkedList.class.getName(),
+                "new observer registered: " + klass);
     }
     public void unregister(ObservableLinkedList.Observer o)
     {
         observers.remove(o);
     }
+
+
 
     @Override
     public void clear() {
@@ -48,6 +56,9 @@ public class ObservableLinkedList<E> extends LinkedList<E> {
     public void fireEvent() {
         for (Observer o : observers)
             o.listChanged();
+
+        Log.d(ObservableLinkedList.class.getName(),
+              "fired event from Thread " + Thread.currentThread().getName());
     }
 
     public interface Observer {

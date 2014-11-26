@@ -135,7 +135,7 @@ public class LighterBluetoothService extends Service {
                  diff = send_time - evnt_time;
 
             Date date = new Date(System.currentTimeMillis() - diff);
-            Log.w(TAG, "got event at " + date);
+            Log.w(TAG, "got event at " + date + " " + Thread.currentThread().getName());
 
             Location location = null; // XXX
             mEventList.add( new CigaretteEvent(date, location) );

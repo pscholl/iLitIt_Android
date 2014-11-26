@@ -114,5 +114,4 @@ public class HomescreenFragment extends Fragment {
         else
             mHandler.removeCallbacks(rUpdateFields);
     }
-
 }
