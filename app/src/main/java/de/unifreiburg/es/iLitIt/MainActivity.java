@@ -10,6 +10,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 
@@ -32,13 +33,14 @@ public class MainActivity extends FragmentActivity {
     ViewPager mViewPager;
     final String TAG = MainActivity.class.toString();
     LighterBluetoothService mBluetoothService;
-    String mDeviceAddress;
-
     private ObservableLinkedList<CigaretteEvent> mModel = null; //new ObservableLinkedList<CigaretteEvent>();
+
     @Override
     protected void onPause() {
         super.onPause();
         unbindService(mServiceConnection);
+
+
     }
 
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -48,14 +50,6 @@ public class MainActivity extends FragmentActivity {
             // informed about model changes by attaching an observer to this model
             mBluetoothService = ((LighterBluetoothService.LocalBinder) service).getService();
             mModel = mBluetoothService.getModel();
-
-            // Create the adapter that will return a fragment for each of the three
-            // primary sections of the activity.
-            mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
-
-            // Set up the ViewPager with the sections adapter.
-            mViewPager = (ViewPager) findViewById(R.id.pager);
-            mViewPager.setAdapter(mSectionsPagerAdapter);
 
             // give fragments access to the data
             for (Fragment f : getSupportFragmentManager().getFragments()) {
@@ -81,6 +75,15 @@ public class MainActivity extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the activity.
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
+        // Set up the ViewPager with the sections adapter.
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+
     }
 
     @Override
