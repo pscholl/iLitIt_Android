@@ -56,6 +56,18 @@ public class MainActivity extends FragmentActivity {
             // Set up the ViewPager with the sections adapter.
             mViewPager = (ViewPager) findViewById(R.id.pager);
             mViewPager.setAdapter(mSectionsPagerAdapter);
+
+            // give fragments access to the data
+            for (Fragment f : getSupportFragmentManager().getFragments()) {
+                try {
+                    MyFragment mf = (MyFragment) f;
+                    mf.setModel(mModel);
+                    mf.setBluetoothService(mBluetoothService);
+                } catch (ClassCastException e) {
+                    Log.d(TAG, "unable to cast " + f.toString() + " to MyFragment");
+                }
+            }
+
         }
 
         @Override
@@ -88,11 +100,10 @@ public class MainActivity extends FragmentActivity {
         bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
     }
 
-    public ObservableLinkedList<CigaretteEvent> getModel() {
-        return mModel;
-    }
-    public LighterBluetoothService getServiceConnection() {
-        return mBluetoothService;
+    /** this is the interface for all fragment created down here */
+    public interface MyFragment {
+        public void setModel(ObservableLinkedList<CigaretteEvent> list);
+        public void setBluetoothService(LighterBluetoothService service);
     }
 
     /**
@@ -112,11 +123,19 @@ public class MainActivity extends FragmentActivity {
 
         @Override
         public Fragment getItem(int position) {
+            Fragment f = null;
+
             try {
-                return fragments[position];
+                f = fragments[position];
+                if (mModel != null) {
+                    ((MyFragment) f).setModel(mModel);
+                    ((MyFragment) f).setBluetoothService(mBluetoothService);
+                }
             } catch (IndexOutOfBoundsException e) {
                 Log.d(TAG, "index out of bounds " + position, e);
                 return null;
+            } finally {
+                return f;
             }
         }
 

@@ -15,59 +15,66 @@ import java.util.Date;
 /**
  * Created by phil on 11/18/14.
  */
-public class SettingsFragment extends Fragment {
+public class SettingsFragment extends Fragment implements MainActivity.MyFragment {
     private ObservableLinkedList<CigaretteEvent> mModel;
     private LighterBluetoothService mServiceconnection;
     private Button mClear;
     private TextView mMacAddr;
-    private Runnable rUpdateFields = new Runnable() {
-        @Override
-        public void run() {
-            mMacAddr.setText(mServiceconnection.get_mac_addr());
-        }
-    };
     private View mRootView = null;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setRetainInstance(true);
+    private DelayedObserver rUpdateFields = new DelayedObserver(10, new Runnable() {
+        @Override
+        public void run() {
+            if (mRootView==null || mServiceconnection==null)
+                return; // not fully initialised
 
-        // get the model instance from the main activity, this is ugly, but still seems
-        // to be the cleanest way in Android
-        mModel = ((MainActivity) getActivity()).getModel();
-        mServiceconnection = ((MainActivity) getActivity()).getServiceConnection();
-    }
+            if (mMacAddr==null)
+                mMacAddr = (TextView) mRootView.findViewById(R.id.macaddr);
+
+            mMacAddr.setText(mServiceconnection.get_mac_addr());
+        }
+    });
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        if (mRootView==null) {
-            mRootView = inflater.inflate(R.layout.settings_fragment, container, false);
+        mRootView = inflater.inflate(R.layout.settings_fragment, container, false);
 
-            mModel.register(new DelayedObserver(10, rUpdateFields));
-
-            mClear = (Button) mRootView.findViewById(R.id.cleardatabutton);
-            mClear.setOnClickListener(new View.OnClickListener() {
+        mClear = (Button) mRootView.findViewById(R.id.cleardatabutton);
+        mClear.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public void onClick(View v) {
-                    Log.e(MainActivity.USER_INTERACTION_TAG, "cleared all cigarettes from Settings");
-                    mModel.clear();
-                }
-            });
+            public void onClick(View v) {
+                Log.e(MainActivity.USER_INTERACTION_TAG, "cleared all cigarettes from Settings");
+                if (mModel!=null) mModel.clear();
+            }
+        });
 
-            mMacAddr = (TextView) mRootView.findViewById(R.id.macaddr);
-            mMacAddr.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mServiceconnection.clear_mac_addr();
+        mMacAddr = (TextView) mRootView.findViewById(R.id.macaddr);
+        mMacAddr.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mServiceconnection!=null) mServiceconnection.clear_mac_addr();
                 }
-            });
-            mMacAddr.setText(mServiceconnection.get_mac_addr());
-        }  else { // on config (i.e. screen rotation, the view is still attached)
-            ViewGroup parent = (ViewGroup) mRootView.getParent();
-            parent.removeView(mRootView);
-        }
+        });
 
         return mRootView;
+    }
+
+    @Override
+    public void setModel(ObservableLinkedList<CigaretteEvent> list) {
+        if (mModel!=null) mModel.unregister(rUpdateFields);
+        mModel = list;
+        mModel.register(rUpdateFields);
+    }
+
+    @Override
+    public void setBluetoothService(LighterBluetoothService service) {
+        mServiceconnection = service;
+        rUpdateFields.mAction.run();
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        rUpdateFields.mAction.run();
     }
 }

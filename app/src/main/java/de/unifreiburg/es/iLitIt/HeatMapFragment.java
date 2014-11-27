@@ -23,12 +23,12 @@ import java.util.ArrayList;
 /**
  * Created by phil on 11/26/14.
  */
-public class HeatMapFragment extends SupportMapFragment {
+public class HeatMapFragment extends SupportMapFragment implements MainActivity.MyFragment {
     private static final String TAG = HeatMapFragment.class.getCanonicalName();
+    private static GoogleMap mMap;
     private HeatmapTileProvider mProvider;
     private TileOverlay mOverlay;
-    private static ObservableLinkedList<CigaretteEvent> mModel;
-    private static GoogleMap mMap;
+    private ObservableLinkedList<CigaretteEvent> mModel;
 
     DelayedObserver rUpdateView = new DelayedObserver(500, new Runnable() {
         @Override
@@ -48,64 +48,60 @@ public class HeatMapFragment extends SupportMapFragment {
                 mProvider.setData(latlng);
             }
 
-            Log.d(TAG, "updateview");
             mOverlay.clearTileCache();
         }
     });
 
     @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        mModel.unregister(rUpdateView);
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = super.onCreateView(inflater, container, savedInstanceState);
-
-        if (((MainActivity) getActivity()).getModel() != null)
-            mModel = ((MainActivity) getActivity()).getModel();
-
-        if (mModel==null)
-            return v;
-
-        mModel.register(rUpdateView);
 
         if (getMap()!=null)
             mMap = getMap();
 
-        rUpdateView.mAction.run();
+        return v;
+    }
+
+    @Override
+    public void setModel(ObservableLinkedList<CigaretteEvent> cigaretteEvents) {
+        if (mModel != null) {
+            mModel.unregister(rUpdateView);
+        }
+
+        mModel = cigaretteEvents;
+        mModel.register(rUpdateView);
 
         if (mModel.size() > 2) {
-            getMap().setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
+            mMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
                 @Override
                 public void onCameraChange(CameraPosition cameraPosition) {
-                    double max_lat=Double.NEGATIVE_INFINITY, max_lon=Double.NEGATIVE_INFINITY,
-                            min_lat=Double.POSITIVE_INFINITY, min_lon=Double.POSITIVE_INFINITY;
+                    double max_lat = Double.NEGATIVE_INFINITY, max_lon = Double.NEGATIVE_INFINITY,
+                            min_lat = Double.POSITIVE_INFINITY, min_lon = Double.POSITIVE_INFINITY;
 
-                    Log.d(TAG, "onchange");
-
-                    for (CigaretteEvent e: mModel) {
+                    for (CigaretteEvent e : mModel) {
                         double lat = e.where.getLatitude(),
                                 lon = e.where.getLongitude();
 
-                        if (lat > max_lat)       max_lat = lat;
-                        else if (lat < min_lat)  min_lat = lat;
-                        if (lon > max_lon)       max_lon = lon;
-                        else if (lon < min_lon)  min_lon = lon;
+                        if (lat > max_lat) max_lat = lat;
+                        else if (lat < min_lat) min_lat = lat;
+                        if (lon > max_lon) max_lon = lon;
+                        else if (lon < min_lon) min_lon = lon;
                     }
 
                     LatLng sw = new LatLng(min_lat, min_lon),
                             ne = new LatLng(max_lat, max_lon);
 
                     mMap.animateCamera(
-                            CameraUpdateFactory.newLatLngBounds(new LatLngBounds(sw,ne), 150));
+                            CameraUpdateFactory.newLatLngBounds(new LatLngBounds(sw, ne), 150));
                     mMap.setOnCameraChangeListener(null);
+                    rUpdateView.mAction.run();
                 }
             });
         }
+    }
 
+    @Override
+    public void setBluetoothService(LighterBluetoothService service) {
 
-        return v;
     }
 }

@@ -21,13 +21,13 @@ import java.util.List;
 /**
  * Created by phil on 11/17/14.
  */
-public class HomescreenFragment extends Fragment {
-
+public class HomescreenFragment extends Fragment implements  MainActivity.MyFragment {
     private static final long FIELD_DELAY = 100;
-    private final Handler mHandler;
+    private final Handler mHandler = new Handler();
     private ObservableLinkedList<CigaretteEvent> mModel;
     private int mTimeAgo = 0;
-    private Runnable rUpdateFields = new Runnable() {
+    private ViewGroup mRootView;
+    private Runnable rUpdateFields =  new Runnable() {
         @Override
         public void run() {
             TextView timeago = (TextView) mRootView.findViewById(R.id.timeago),
@@ -38,8 +38,8 @@ public class HomescreenFragment extends Fragment {
 
             mHandler.postDelayed(rUpdateFields, FIELD_DELAY);
 
-            if (timeago == null || total == null || since == null || nicotine == null || mean == null ||
-                    mModel == null) {
+            if (timeago == null || total == null || since == null || nicotine == null ||
+                mean == null || mModel == null) {
                 return;
             }
 
@@ -55,52 +55,41 @@ public class HomescreenFragment extends Fragment {
         }
     };
 
-    private ViewGroup mRootView;
+    @Override
+    public void setBluetoothService(LighterBluetoothService service) {
+
+    }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setRetainInstance(true);
-
-        // get the model instance from the main activity, this is ugly, but still seems
-        // to be the cleanest way in Android
-        mModel = ((MainActivity) getActivity()).getModel();
+    public void setModel(ObservableLinkedList<CigaretteEvent> list) {
+        mModel = list;
     }
-
-    public HomescreenFragment() {
-        super();
-        mHandler = new Handler();
-    }
-
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if (mRootView == null) {
-            mRootView = (ViewGroup) inflater.inflate(R.layout.homescreen_fragment, container, false);;
+        mRootView = (ViewGroup) inflater.inflate(R.layout.homescreen_fragment, container, false);;
 
-            Button button = (Button) mRootView.findViewById(R.id.justhadonebutton);
-            button.setOnClickListener(new View.OnClickListener() {
+        Button button = (Button) mRootView.findViewById(R.id.justhadonebutton);
+        button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    mModel.add(new CigaretteEvent(new Date(), null));
-                    Log.e(MainActivity.USER_INTERACTION_TAG, "added cigarette via HomeScreen");
-                }
+                if (mModel == null) return;
+                mModel.add(new CigaretteEvent(new Date(), null));
+                Log.e(MainActivity.USER_INTERACTION_TAG, "added cigarette via HomeScreen");
+            }
             });
 
-            button = (Button) mRootView.findViewById(R.id.forget_lastone);
-            button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mModel.size() > 0)
-                        mModel.remove( mModel.getLast() );
-                    Log.e(MainActivity.USER_INTERACTION_TAG, "removed cigarette via HomeScreen");
-                }
-            });
-        } else { // on config (i.e. screen rotation, the view is still attached)
-            ViewGroup parent = (ViewGroup) mRootView.getParent();
-            parent.removeView(mRootView);
-        }
+        button = (Button) mRootView.findViewById(R.id.forget_lastone);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mModel==null) return;
+                if (mModel.size() > 0)
+                    mModel.remove( mModel.getLast() );
+                Log.e(MainActivity.USER_INTERACTION_TAG, "removed cigarette via HomeScreen");
+            }
+        });
 
         return mRootView;
     }
