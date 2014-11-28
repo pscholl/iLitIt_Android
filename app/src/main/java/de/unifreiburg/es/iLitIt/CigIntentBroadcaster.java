@@ -30,13 +30,13 @@ public class CigIntentBroadcaster extends DelayedObserver<CigaretteEvent> {
                 i = new Intent(ACTION_CLR);
             } else if (mNumCigarettes < mList.size() && mObject.hasValidLocation()) {
                 i = new Intent(ACTION_ADD);
-                i.putExtra(TIMESTAMP, mObject.when.toString());
+                i.putExtra(TIMESTAMP, CigaretteEvent.dateformat.format(mObject.when));
                 i.putExtra(LATITUDE, mObject.where.getLatitude());
                 i.putExtra(LONGITUDE, mObject.where.getLongitude());
                 mNumCigarettes = mList.size();
             } else if (mNumCigarettes > mList.size()) {
                 i = new Intent(ACTION_REM);
-                i.putExtra(TIMESTAMP, mObject.when.toString());
+                i.putExtra(TIMESTAMP, CigaretteEvent.dateformat.format(mObject.when));
                 mNumCigarettes = mList.size();
             } else { // ignore changes to a cigs inside the model
                 return;
