@@ -81,7 +81,7 @@ public class LighterBluetoothService extends Service {
     public final static UUID UUID_CCC =
             UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
-    private ObservableLinkedList<CigaretteEvent> mEventList = new ObservableLinkedList<CigaretteEvent>();
+    private ObservableLinkedList<CigaretteEvent> mEventList =null;
 
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         @Override
@@ -190,8 +190,19 @@ public class LighterBluetoothService extends Service {
             mBluetoothChangeReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
+                    final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
+                                                               BluetoothAdapter.ERROR);
+
+                    switch(state) {
+                        case BluetoothAdapter.STATE_ON:
+                            onStartCommand(null,0,0);
+                            break;
+                        case BluetoothAdapter.STATE_OFF:
+                            break;
+                        default:
+                            break;
+                    }
                     close();
-                    onStartCommand(null, 0, 0);
                 }
             };
 
@@ -202,15 +213,13 @@ public class LighterBluetoothService extends Service {
 
         // For API level 18 and above, get a reference to BluetoothAdapter through
         // BluetoothManager.
-        if (serviceIsInitialized)
-            return START_STICKY;
+        //if (serviceIsInitialized)
+        //    return START_STICKY;
 
+        mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         if (mBluetoothManager == null) {
-            mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-            if (mBluetoothManager == null) {
-                Log.e(TAG, "Unable to initialize BluetoothManager.");
-                return START_NOT_STICKY;
-            }
+            Log.e(TAG, "Unable to initialize BluetoothManager.");
+            return START_NOT_STICKY;
         }
 
         mBluetoothAdapter = mBluetoothManager.getAdapter();
@@ -228,23 +237,21 @@ public class LighterBluetoothService extends Service {
         mBluetoothDeviceAddress = PreferenceManager.getDefaultSharedPreferences(this).
                 getString(KEY_DEVICEADDR, null);
 
-        /** create a handler on the UI thread */
-        mHandler = new Handler(Looper.getMainLooper());
-        mScanStartDelay = PreferenceManager.getDefaultSharedPreferences(this).getLong(KEY_SCANSTARTDELAY, 20 * 1000);
-        mHandler.postDelayed(rStartLEScan, 10);
-
         super.onStartCommand(intent, flags, startId);
 
         /** load the stored events */
-        try {
-            FileInputStream fis = openFileInput(FILENAME);
-            BufferedReader br = new BufferedReader(new InputStreamReader(fis));
-            String line;
+        if (mEventList==null) {
+            mEventList = new ObservableLinkedList<CigaretteEvent>();
+            try {
+                FileInputStream fis = openFileInput(FILENAME);
+                BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+                String line;
 
-            while ((line=br.readLine())!=null)
-                mEventList.add( CigaretteEvent.fromString(line) );
-        } catch(Exception e) {
-            Log.e(TAG, "file load failed",e);
+                while ((line = br.readLine()) != null)
+                    mEventList.add(CigaretteEvent.fromString(line));
+            } catch (Exception e) {
+                Log.e(TAG, "file load failed", e);
+            }
         }
 
         /** add an observer to the model that store the list after a change has occured,
@@ -256,6 +263,10 @@ public class LighterBluetoothService extends Service {
         mLocationClient = new LocationClient(this, mLocationHandler, mLocationHandler);
         mEventList.register(new DelayedObserver(1000, mLocationHandler));
 
+        /** start to scan for LE devices in the area */
+        mHandler = new Handler(Looper.getMainLooper());
+        mScanStartDelay = PreferenceManager.getDefaultSharedPreferences(this).getLong(KEY_SCANSTARTDELAY, 20 * 1000);
+        mHandler.postDelayed(rStartLEScan, 10);
 
         return START_STICKY;
     }
