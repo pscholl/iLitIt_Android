@@ -14,42 +14,48 @@ import java.util.Date;
  */
 public class CigaretteEvent {
     public static final DateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-    public static final java.lang.String CSV_SEPARATOR = "\t";
+    public static final char CSV_SEPARATOR = '\t';
 
     public Date when;
     public Location where;
     public String via;
 
-    public CigaretteEvent(Date date, Location location) {
+    public CigaretteEvent(Date date, String v, Location location) {
         when = date;
+        via = v;
         where = location;
     }
 
     public static CigaretteEvent fromString(String line) throws ParseException {
         Location l = null;
         Date d;
+        String v;
 
-        String[] dateandloc = line.split(CSV_SEPARATOR);
-        if (dateandloc.length < 1) { throw new ParseException("line too short", 0); }
-        d = dateformat.parse(dateandloc[0]);
+        String[] dateandviaandloc = line.split(Character.toString(CSV_SEPARATOR));
+        if (dateandviaandloc.length < 2) { throw new ParseException("line too short", 0); }
+        d = dateformat.parse(dateandviaandloc[0]);
+        v = dateandviaandloc[1];
 
-        String[] latlon = dateandloc[1].split(" ");
+        String[] latlon = dateandviaandloc[1].split(" ");
         if (latlon.length > 1) { // if we can't parse -> set l == null
             l = new Location("file");
             l.setLatitude( NumberFormat.getInstance().parse(latlon[0]).doubleValue() );
             l.setLongitude( NumberFormat.getInstance().parse(latlon[1]).doubleValue() );
         }
 
-        return new CigaretteEvent(d,l);
+        return new CigaretteEvent(d,v,l);
     }
 
     @Override
     public String toString() {
         if (where == null)
-            return dateformat.format(when);
+            return String.format("%s%c%s",dateformat.format(when), CSV_SEPARATOR, via);
         else
-            return String.format("%s\t%f %f",
+            return String.format("%s%c%s%c%f %f",
                 dateformat.format(when),
+                CSV_SEPARATOR,
+                via.replace(CSV_SEPARATOR, ' '),
+                CSV_SEPARATOR,
                 where.getLatitude(),
                 where.getLongitude());
     }

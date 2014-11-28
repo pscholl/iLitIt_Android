@@ -11,6 +11,7 @@ Annotation add:
     i.addExtra("timestamp", <iso-string-timestamp>)
     i.addExtra("latitude", <double>)
     i.addExtra("longitude", <double>)
+    i.addExtra("via", <string>) // pathway of the added annotation
 
 Annotation remove:
 

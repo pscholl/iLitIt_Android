@@ -32,8 +32,7 @@ public class CigIntentBroadcaster implements ObservableLinkedList.Observer<Cigar
     @Override
     public void listChanged(ObservableLinkedList<CigaretteEvent> list, CigaretteEvent object) {
         final Intent i = new Intent();
-        i.setFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-
+        
         if (object==null && list.size()==0) {
             i.setAction(ACTION_CLR);
             mNumCigarettes = 0;

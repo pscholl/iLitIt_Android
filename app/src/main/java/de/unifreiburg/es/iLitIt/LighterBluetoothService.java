@@ -130,7 +130,7 @@ public class LighterBluetoothService extends Service {
             Log.w(TAG, "got event at " + date + " " + Thread.currentThread().getName());
 
             Location location = null; // XXX
-            mEventList.add( new CigaretteEvent(date, location) );
+            mEventList.add( new CigaretteEvent(date, "lighter", location) );
         }
     };
 

@@ -68,14 +68,14 @@ public class HomescreenFragment extends Fragment implements  MainActivity.MyFrag
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        mRootView = (ViewGroup) inflater.inflate(R.layout.homescreen_fragment, container, false);;
+        mRootView = (ViewGroup) inflater.inflate(R.layout.homescreen_fragment, container, false);
 
         Button button = (Button) mRootView.findViewById(R.id.justhadonebutton);
         button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                 if (mModel == null) return;
-                mModel.add(new CigaretteEvent(new Date(), null));
+                mModel.add(new CigaretteEvent(new Date(), "ui", null));
                 Log.e(MainActivity.USER_INTERACTION_TAG, "added cigarette via HomeScreen");
             }
             });
