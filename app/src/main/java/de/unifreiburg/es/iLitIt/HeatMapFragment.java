@@ -85,8 +85,11 @@ public class HeatMapFragment extends SupportMapFragment implements MainActivity.
                             min_lat = Double.POSITIVE_INFINITY, min_lon = Double.POSITIVE_INFINITY;
 
                     for (CigaretteEvent e : mModel) {
+                        if (e.where == null)
+                            continue;
+                        
                         double lat = e.where.getLatitude(),
-                                lon = e.where.getLongitude();
+                               lon = e.where.getLongitude();
 
                         if (lat > max_lat) max_lat = lat;
                         else if (lat < min_lat) min_lat = lat;
