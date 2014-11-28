@@ -13,10 +13,12 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.widget.Toast;
 
 
 public class MainActivity extends FragmentActivity {
     public static final String USER_INTERACTION_TAG = "iLitIt_UI";
+    private static final int ENABLE_BT_REQUEST = 1337;
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -93,7 +95,7 @@ public class MainActivity extends FragmentActivity {
         // make sure that bluetooth is enable before trying to start our connection
         if (!BluetoothAdapter.getDefaultAdapter().isEnabled()) {
             Intent enableBt = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBt, 0);
+            startActivityForResult(enableBt, ENABLE_BT_REQUEST);
         }
 
         // Set up the service connection for the lighter and initialize
@@ -101,6 +103,16 @@ public class MainActivity extends FragmentActivity {
         Intent intent = new Intent(this, LighterBluetoothService.class);
         startService(intent); // make sure it lives on
         bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == ENABLE_BT_REQUEST && resultCode == RESULT_CANCELED) {
+            Toast.makeText(this, R.string.bluetooth_not_enabled, Toast.LENGTH_LONG).show();
+            finish();
+        }
     }
 
     /** this is the interface for all fragment created down here */

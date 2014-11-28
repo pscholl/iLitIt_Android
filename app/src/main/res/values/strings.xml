@@ -17,5 +17,6 @@
     <string name="connectedlighter_none">none</string>
     <string name="clear_all_data">clear all data</string>
     <string name="foget_lastone">forget last cigarette</string>
+    <string name="bluetooth_not_enabled">BLE needs to be enabled, finishing application.</string>
 
 </resources>
