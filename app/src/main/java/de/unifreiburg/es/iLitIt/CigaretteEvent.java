@@ -18,6 +18,7 @@ public class CigaretteEvent {
 
     public Date when;
     public Location where;
+    public String via;
 
     public CigaretteEvent(Date date, Location location) {
         when = date;
