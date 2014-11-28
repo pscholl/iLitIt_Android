@@ -52,4 +52,11 @@ public class CigaretteEvent {
                 where.getLatitude(),
                 where.getLongitude());
     }
+
+    public boolean hasValidLocation() {
+        return !(where==null ||
+                where.getProvider()==null ||
+                where.getProvider().equals("test") ||
+                where.getProvider().equals("mock"));
+    }
 }

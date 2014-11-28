@@ -28,9 +28,7 @@ public class CigIntentBroadcaster extends DelayedObserver<CigaretteEvent> {
 
             if (mObject == null) {
                 i = new Intent(ACTION_CLR);
-            } else if (mNumCigarettes < mList.size() &&
-                      (mObject.where != null && (!mObject.where.getProvider().equals("test") ||
-                                                 !mObject.where.getProvider().equals("mock")))) {
+            } else if (mNumCigarettes < mList.size() && mObject.hasValidLocation()) {
                 i = new Intent(ACTION_ADD);
                 i.putExtra(TIMESTAMP, mObject.when.toString());
                 i.putExtra(LATITUDE, mObject.where.getLatitude());

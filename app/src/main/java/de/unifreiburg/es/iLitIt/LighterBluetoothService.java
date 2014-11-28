@@ -399,7 +399,7 @@ public class LighterBluetoothService extends Service {
                 return; // this seems odd
 
             for (CigaretteEvent e : mEventList) {
-                if (needsLocationUpdate(e.where)) {
+                if (!e.hasValidLocation()) {
                     e.where = mLocationClient.getLastLocation();
                     mEventList.fireEvent(e); // let observer know about the update
                 }
@@ -422,7 +422,7 @@ public class LighterBluetoothService extends Service {
         public void run() {
             // called when mEventList has changed
             for (CigaretteEvent e: mEventList) {
-                if (needsLocationUpdate(e.where)) {
+                if (!e.hasValidLocation()) {
                     Log.d(TAG, "connecting to LocationService");
                     mLocationClient.connect();
                     return;
@@ -431,10 +431,6 @@ public class LighterBluetoothService extends Service {
 
             // make sure that there is no dangling connection
             mLocationClient.disconnect();
-        }
-
-        private boolean needsLocationUpdate(Location where) {
-            return where==null || where.getProvider()==null || where.getProvider().equals("mock");
         }
     }
 
