@@ -192,7 +192,6 @@ public class LighterBluetoothService extends Service {
                 public void onReceive(Context context, Intent intent) {
                     close();
                     onStartCommand(null, 0, 0);
-                    Log.d(TAG, "bluetooth reenaled or so");
                 }
             };
 
@@ -327,21 +326,6 @@ public class LighterBluetoothService extends Service {
 
         mBluetoothGatt.close();
         mBluetoothGatt = null;
-
-        if (mEventList.size() == 0)
-            return;
-
-        LinkedList<String> li = new LinkedList<String>();
-        for (int i = mEventList.size() > 10 ? 10 : mEventList.size(); i > 0; i--)
-            li.add(mEventList.get(mEventList.size() - i).when.toString());
-
-        Intent info = new Intent(IACTION);
-        info.putExtra(EXTRA_ARRAY_OF_10_CIGARETTES, li.toArray(new String[li.size()]));
-        info.putExtra(EXTRA_FILE_URI, FILENAME);
-        info.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-        sendBroadcast(info);
-
-        Log.e(TAG, info.toString());
 
         // start a new scan immediately
         mHandler.postDelayed(rStartLEScan, 10);
