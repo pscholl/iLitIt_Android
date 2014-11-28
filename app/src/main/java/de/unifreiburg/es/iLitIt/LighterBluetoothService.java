@@ -192,6 +192,7 @@ public class LighterBluetoothService extends Service {
                 public void onReceive(Context context, Intent intent) {
                     close();
                     onStartCommand(null, 0, 0);
+                    Log.d(TAG, "bluetooth reenaled or so");
                 }
             };
 
