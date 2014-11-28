@@ -38,8 +38,14 @@ public class HeatMapFragment extends SupportMapFragment implements MainActivity.
                 if (e.where != null)
                     latlng.add(new LatLng(e.where.getLatitude(), e.where.getLongitude()));
 
-            if (latlng.size() == 0)
+            if (latlng.size() == 0) {
+                if (mProvider!=null) {
+                    mOverlay.remove();
+                    mProvider=null;
+                }
+
                 return;
+            }
 
             if (mProvider == null) {
                 mProvider = new HeatmapTileProvider.Builder().data(latlng).build();
