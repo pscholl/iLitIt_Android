@@ -56,9 +56,8 @@ import java.util.UUID;
 public class LighterBluetoothService extends Service {
     private final static String TAG = LighterBluetoothService.class.getSimpleName();
     public static final String KEY_DEVICEADDR = "device_addr";
-    public static final String FILENAME = "cigarettes.csv";
     public String KEY_SCANSTARTDELAY = "scan_timeout";
-
+    private BroadcastReceiver mSmartWatchAnnotationReceiver =  null;
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
     private String mBluetoothDeviceAddress;
@@ -137,11 +136,6 @@ public class LighterBluetoothService extends Service {
     private BroadcastReceiver mBluetoothChangeReceiver;
     private LocationClient mLocationClient;
 
-    private void broadcastUpdate(final String action) {
-        final Intent intent = new Intent(action);
-        sendBroadcast(intent);
-    }
-
     public void clear_mac_addr() {
         mBluetoothDeviceAddress = null;
         PreferenceManager.getDefaultSharedPreferences(LighterBluetoothService.this).edit().
@@ -181,6 +175,23 @@ public class LighterBluetoothService extends Service {
             IntentFilter mif = new IntentFilter();
             mif.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
             registerReceiver(mBluetoothChangeReceiver, mif);
+        }
+
+        if (mSmartWatchAnnotationReceiver==null) {
+            mSmartWatchAnnotationReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if (mEventList == null)
+                        return;
+
+                    String via = intent.getStringExtra("ess.imu_logger.libs.data_save.extra.annotationVia");
+                    mEventList.add( new CigaretteEvent(new Date(), via==null ? "intent" : via, null ) );
+                }
+            };
+
+            // create watch ui intent listener
+            IntentFilter filter = new IntentFilter("ess.imu_logger.libs.data_save.annotate");
+            registerReceiver(mSmartWatchAnnotationReceiver, filter);
         }
 
         // For API level 18 and above, get a reference to BluetoothAdapter through
