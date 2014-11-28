@@ -6,12 +6,14 @@ import android.os.Looper;
 /**
 * Created by phil on 11/19/14.
 */
-public class DelayedObserver implements ObservableLinkedList.Observer {
+public class DelayedObserver<E> implements ObservableLinkedList.Observer<E> {
     protected static Handler mHandler;
-    protected final Runnable mAction;
+    protected Runnable mAction;
     private long mDelay;
 
     public final static long DEFAULT_DELAY = 500;
+    public E mObject;
+    public ObservableLinkedList<E> mList;
 
     public DelayedObserver(long delay, Runnable r) {
         if (mHandler==null)
@@ -21,7 +23,10 @@ public class DelayedObserver implements ObservableLinkedList.Observer {
     }
 
     @Override
-    public void listChanged() {
+    public void listChanged(ObservableLinkedList<E> list, E object) {
+        mList = list;
+        mObject = object;
+
         mHandler.removeCallbacks(mAction, null);
         mHandler.postDelayed(mAction, mDelay);
     }

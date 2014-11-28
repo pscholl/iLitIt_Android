@@ -5,20 +5,20 @@ Android companion Application for the iLitIt Bluetooth Lighter
 
 ## API: fired intents
 
-Annotation via Lighter:
+Annotation add:
 
-    i = new Intent("de.unifreiburg.es.iLitIt.LIGHTER_ADD_CIG")
+    i = new Intent("de.unifreiburg.es.iLitIt.ADD_CIG")
+    i.addExtra("timestamp", <iso-string-timestamp>)
+    i.addExtra("latitude", <double>)
+    i.addExtra("longitude", <double>)
+
+Annotation remove:
+
+    i = new Intent("de.unifreiburg.es.iLitIt.REM_CIG")
     i.addExtra("timestamp", <iso-string-timestamp>)
 
+Clear all Annotations:
 
-Annotation via UI button:
-
-    i = new Intent("de.unifreiburg.es.iLitIt.UI_ADD_CIG")
-    i.addExtra("timestamp", <iso-string-timestamp>)
-
-Removal via UI:
-
-    i = new Intent("de.unifreiburg.es.iLitIt.UI_REM_CIG")
-    i.addExtra("timestamp", <iso-string-timestamp>)
+    i = new Intent("de.unifreiburg.es.iLitIt.CLR")
 
 

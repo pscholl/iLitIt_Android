@@ -47,10 +47,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.UUID;
 
 /**
@@ -61,10 +58,6 @@ public class LighterBluetoothService extends Service {
     private final static String TAG = LighterBluetoothService.class.getSimpleName();
     public static final String KEY_DEVICEADDR = "device_addr";
     public static final String FILENAME = "cigarettes.csv";
-    public static final String EXTRA_ARRAY_OF_10_CIGARETTES = "last10cigs";
-    public static final String EXTRA_FILE_URI = "fileuri";
-    public static final String IACTION = "de.unifreiburg.es.iLitIt.CIGARETTES";
-    private static final long LIST_WRITE_DELAY = 1500;
     public String KEY_SCANSTARTDELAY = "scan_timeout";
 
     private BluetoothManager mBluetoothManager;
@@ -174,7 +167,7 @@ public class LighterBluetoothService extends Service {
         mBluetoothDeviceAddress = null;
         PreferenceManager.getDefaultSharedPreferences(LighterBluetoothService.this).edit().
                 putString(KEY_DEVICEADDR, mBluetoothDeviceAddress).apply();
-        mEventList.fireEvent();
+        mEventList.fireEvent(null);
     }
 
     public String get_mac_addr() {
@@ -402,15 +395,17 @@ public class LighterBluetoothService extends Service {
             // but just start the location service on a new event.
             boolean has_updated = false;
 
+            if (!mLocationClient.isConnected())
+                return; // this seems odd
+
             for (CigaretteEvent e : mEventList) {
                 if (needsLocationUpdate(e.where)) {
                     e.where = mLocationClient.getLastLocation();
-                    has_updated = true;
+                    mEventList.fireEvent(e); // let observer know about the update
                 }
             }
 
             mLocationClient.disconnect();
-            if (has_updated) mEventList.fireEvent(); // let everybody know
         }
 
         @Override

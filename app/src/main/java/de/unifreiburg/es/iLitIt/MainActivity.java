@@ -35,14 +35,14 @@ public class MainActivity extends FragmentActivity {
     ViewPager mViewPager;
     final String TAG = MainActivity.class.toString();
     LighterBluetoothService mBluetoothService;
-    private ObservableLinkedList<CigaretteEvent> mModel = null; //new ObservableLinkedList<CigaretteEvent>();
+    private ObservableLinkedList<CigaretteEvent> mModel = null;
+    //private final CigAnnotationWriter rCigAnnotationWriter = new CigAnnotationWriter();
+    private final CigIntentBroadcaster rCigIntentBroadcaster = new CigIntentBroadcaster(this);
 
     @Override
     protected void onPause() {
         super.onPause();
         unbindService(mServiceConnection);
-
-
     }
 
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -51,7 +51,15 @@ public class MainActivity extends FragmentActivity {
             // get the bluetooth service and its attached model, all fragments
             // informed about model changes by attaching an observer to this model
             mBluetoothService = ((LighterBluetoothService.LocalBinder) service).getService();
+
+            if (mModel != null) {
+                //mModel.unregister(rCigAnnotationWriter);
+                mModel.unregister(rCigIntentBroadcaster);
+            }
+
             mModel = mBluetoothService.getModel();
+            //mModel.register(rCigAnnotationWriter);
+            mModel.register(rCigIntentBroadcaster);
 
             // give fragments access to the data
             for (Fragment f : getSupportFragmentManager().getFragments()) {

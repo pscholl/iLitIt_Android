@@ -87,7 +87,7 @@ public class HeatMapFragment extends SupportMapFragment implements MainActivity.
                     for (CigaretteEvent e : mModel) {
                         if (e.where == null)
                             continue;
-                        
+
                         double lat = e.where.getLatitude(),
                                lon = e.where.getLongitude();
 
