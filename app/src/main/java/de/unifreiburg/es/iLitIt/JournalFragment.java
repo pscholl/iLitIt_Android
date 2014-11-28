@@ -36,12 +36,13 @@ public class JournalFragment extends Fragment implements MainActivity.MyFragment
                 ListView elv = (ListView) mRootView.findViewById(R.id.journal_list_view);
                 elv.setAdapter(mAdapter);
 
-                elv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                elv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
                     @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                         CigaretteEvent e = (CigaretteEvent) parent.getItemAtPosition(position);
                         mAdapter.remove(e);
                         Log.e(MainActivity.USER_INTERACTION_TAG, "removed cigarette via Journal");
+                        return true;
                     }
                 });
             }
