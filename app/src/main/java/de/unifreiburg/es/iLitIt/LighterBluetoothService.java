@@ -375,10 +375,17 @@ public class LighterBluetoothService extends Service {
                             putString(KEY_DEVICEADDR, mBluetoothDeviceAddress).apply();
                 }
 
-                if ( connect(mBluetoothDeviceAddress) ) {
-                    Log.w(TAG, "stopping the scan, found connectable device " + device.getAddress() );
-                    mBluetoothAdapter.stopLeScan(this);
-                }
+                final String addr = device.getAddress();
+                mHandler.post(new Runnable() { // SAMSUNG workaround
+                    @Override
+                    public void run() {
+                        if ( connect(mBluetoothDeviceAddress) ) {
+                            Log.w(TAG, "stopping the scan, found connectable device " + addr);
+                            mBluetoothAdapter.stopLeScan(mFindLighterDevice);
+                        }
+                    }
+                });
+
 
                 //mHandler.postDelayed(stopLEScan, timeout_ms)
             }
