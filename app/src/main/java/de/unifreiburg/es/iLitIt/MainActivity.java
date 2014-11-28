@@ -36,7 +36,7 @@ public class MainActivity extends FragmentActivity {
     final String TAG = MainActivity.class.toString();
     LighterBluetoothService mBluetoothService;
     private ObservableLinkedList<CigaretteEvent> mModel = null;
-    //private final CigAnnotationWriter rCigAnnotationWriter = new CigAnnotationWriter();
+    private final CigAnnotationWriter rCigAnnotationWriter = new CigAnnotationWriter(this);
     private final CigIntentBroadcaster rCigIntentBroadcaster = new CigIntentBroadcaster(this);
 
     @Override
@@ -52,13 +52,13 @@ public class MainActivity extends FragmentActivity {
             // informed about model changes by attaching an observer to this model
             mBluetoothService = ((LighterBluetoothService.LocalBinder) service).getService();
 
+            // re-register AnnotationWriter and IntentBroadcaster
             if (mModel != null) {
-                //mModel.unregister(rCigAnnotationWriter);
+                mModel.unregister(rCigAnnotationWriter);
                 mModel.unregister(rCigIntentBroadcaster);
             }
-
             mModel = mBluetoothService.getModel();
-            //mModel.register(rCigAnnotationWriter);
+            mModel.register(rCigAnnotationWriter);
             mModel.register(rCigIntentBroadcaster);
 
             // give fragments access to the data

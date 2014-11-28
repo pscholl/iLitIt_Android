@@ -30,7 +30,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
-import android.location.LocationProvider;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -135,26 +134,6 @@ public class LighterBluetoothService extends Service {
         }
     };
 
-    public java.lang.Runnable rListWrite = new Runnable() {
-        @Override
-        public void run() {
-            try {
-                FileOutputStream fos = openFileOutput(FILENAME, MODE_PRIVATE);
-
-                for (CigaretteEvent ev : mEventList) {
-                    fos.write(ev.toString().getBytes("utf-8"));
-                    fos.write("\n".getBytes("utf-8"));
-                }
-
-                fos.close();
-            } catch (Exception e) {
-                Log.e(TAG, "unable to write ", e);
-            }
-
-            Log.i(TAG, "succesfully written cigs to " + FILENAME);
-        }
-    };
-    private static boolean serviceIsInitialized = false;
     private BroadcastReceiver mBluetoothChangeReceiver;
     private LocationClient mLocationClient;
 
@@ -221,8 +200,6 @@ public class LighterBluetoothService extends Service {
             return START_NOT_STICKY;
         }
 
-        serviceIsInitialized = true;
-
         // for DEBUGGING only
         // PreferenceManager.getDefaultSharedPreferences(this).edit().clear().apply();
 
@@ -234,22 +211,8 @@ public class LighterBluetoothService extends Service {
 
         /** load the stored events */
         if (mEventList==null) {
-            mEventList = new ObservableLinkedList<CigaretteEvent>();
-            try {
-                FileInputStream fis = openFileInput(FILENAME);
-                BufferedReader br = new BufferedReader(new InputStreamReader(fis));
-                String line;
-
-                while ((line = br.readLine()) != null)
-                    mEventList.add(CigaretteEvent.fromString(line));
-            } catch (Exception e) {
-                Log.e(TAG, "file load failed", e);
-            }
+            mEventList = CigAnnotationWriter.readCigaretteList(this);
         }
-
-        /** add an observer to the model that store the list after a change has occured,
-         * and after a certain delay to avoid to much delay for event handling. */
-        mEventList.register(new DelayedObserver(1500,rListWrite));
 
         /** set-up the location service, we need this to run here, since we need to
          *access the location whenever there is a chang to the cigarette model. */
@@ -278,13 +241,6 @@ public class LighterBluetoothService extends Service {
         return mBinder;
     }
     private final IBinder mBinder = new LocalBinder();
-
-    @Override
-    public void onDestroy() {
-        Log.e(TAG, "service destroyed");
-        serviceIsInitialized=false;
-        super.onDestroy();
-    }
 
     public boolean connect(final String address) {
         if (mBluetoothAdapter == null || address == null) {

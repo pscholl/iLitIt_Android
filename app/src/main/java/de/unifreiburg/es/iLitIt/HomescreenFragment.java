@@ -44,7 +44,7 @@ public class HomescreenFragment extends Fragment implements  MainActivity.MyFrag
             }
 
             total.setText(
-                    String.format("%d cigarettes%s", mModel.size(), mModel.size() > 1 ? "s" : ""));
+                    String.format("%d cigarette%s", mModel.size(), mModel.size() > 1 ? "s" : ""));
 
             since.setText(StatsHelper.tracking_since(mModel));
             timeago.setText(StatsHelper.last_cigarette_at(mModel));
