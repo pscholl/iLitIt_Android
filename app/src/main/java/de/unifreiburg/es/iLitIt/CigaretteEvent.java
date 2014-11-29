@@ -36,7 +36,7 @@ public class CigaretteEvent {
         d = dateformat.parse(dateandviaandloc[0]);
         v = dateandviaandloc[1];
 
-        String[] latlon = dateandviaandloc[1].split(" ");
+        String[] latlon = dateandviaandloc[2].split(" ");
         if (latlon.length > 1) { // if we can't parse -> set l == null
             l = new Location("file");
             l.setLatitude( NumberFormat.getInstance().parse(latlon[0]).doubleValue() );
