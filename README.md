@@ -3,7 +3,7 @@ iLitIt_Android
 
 Android companion Application for the iLitIt Bluetooth Lighter
 
-Current debug build can be found here [https://github.com/pscholl/iLitIt_Android/raw/master/app/build/outputs/apk/app-debug.apk](debug-iLitIt.apk)
+Current debug build can be found here (https://github.com/pscholl/iLitIt_Android/raw/master/app/build/outputs/apk/app-debug.apk)[debug-iLitIt.apk]
 
 ## API: fired intents
 
