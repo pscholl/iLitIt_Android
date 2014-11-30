@@ -91,14 +91,18 @@ public class HeatMapFragment extends SupportMapFragment implements MainActivity.
                         double lat = e.where.getLatitude(),
                                lon = e.where.getLongitude();
 
+                        Log.d(TAG, "lat: " + lat + " lon: " + lon);
+
                         if (lat > max_lat) max_lat = lat;
-                        else if (lat < min_lat) min_lat = lat;
+                        if (lat < min_lat) min_lat = lat;
                         if (lon > max_lon) max_lon = lon;
-                        else if (lon < min_lon) min_lon = lon;
+                        if (lon < min_lon) min_lon = lon;
                     }
 
                     LatLng sw = new LatLng(min_lat, min_lon),
-                            ne = new LatLng(max_lat, max_lon);
+                           ne = new LatLng(max_lat, max_lon);
+
+                    Log.d(TAG, "sw: " + sw.toString() + " ne: " + ne.toString());
 
                     mMap.animateCamera(
                             CameraUpdateFactory.newLatLngBounds(new LatLngBounds(sw, ne), 150));
