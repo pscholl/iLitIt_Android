@@ -33,9 +33,15 @@ public class CigIntentBroadcaster implements ObservableLinkedList.Observer<Cigar
     public void listChanged(ObservableLinkedList<CigaretteEvent> list, CigaretteEvent object) {
         final Intent i = new Intent();
 
+
         if (object==null && list.size()==0) {
             i.setAction(ACTION_CLR);
             mNumCigarettes = 0;
+        }
+        else if (object==null)
+        {
+            // special case for no change to the list, but views need to be updated
+            return;
         }
         else if (mNumCigarettes > list.size())
         {

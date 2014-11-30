@@ -42,10 +42,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.LocationClient;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
 import java.util.Date;
 import java.util.UUID;
 
@@ -56,14 +52,12 @@ import java.util.UUID;
 public class LighterBluetoothService extends Service {
     private final static String TAG = LighterBluetoothService.class.getSimpleName();
     public static final String KEY_DEVICEADDR = "device_addr";
-    public String KEY_SCANSTARTDELAY = "scan_timeout";
     private BroadcastReceiver mSmartWatchAnnotationReceiver =  null;
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
     private String mBluetoothDeviceAddress;
     private BluetoothGatt mBluetoothGatt;
     private Handler mHandler;
-    private long mScanStartDelay;
 
     public final static UUID UUID_SERVICE =
             UUID.fromString("595403fb-f50e-4902-a99d-b39ffa4bb134");
@@ -74,37 +68,40 @@ public class LighterBluetoothService extends Service {
 
     private ObservableLinkedList<CigaretteEvent> mEventList =null;
 
-    private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
+    private final BluetoothGattCallback rGattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            String intentAction;
-            if (mBluetoothGatt==null) {
-                Log.e(TAG, "problem problem");
-                mBluetoothGatt = gatt;
-            }
+            Log.d(TAG,
+                    String.format("onConnectionStateChanged status=%d newState=%d",status,newState));
 
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                Log.i(TAG, "Connected to GATT server. " + status);
-                mBluetoothGatt.discoverServices();
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                Log.i(TAG, "Disconnected from GATT server.");
-                close();
-                mHandler.postDelayed(rStartLEScan, mScanStartDelay);
+            if (newState == BluetoothProfile.STATE_CONNECTED)
+            {
+                Log.d(TAG, "Connected to GATT server (" + status + "), starting discovery...");
+                gatt.discoverServices();
+            }
+            else if (newState == BluetoothProfile.STATE_DISCONNECTED)
+            {
+                Log.d(TAG, "Disconnected from GATT server.");
+                gatt.close();
+
+                mBluetoothGatt = null;
+                mHandler.post(rStartLEScan);
             }
         }
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            if (status != BluetoothGatt.GATT_SUCCESS) {
-                Log.w(TAG, "onServicesDiscovered received: " + status);
+            Log.d(TAG,
+                    String.format("onServicesDiscovery status=%d", status));
+
+            if (status != BluetoothGatt.GATT_SUCCESS)
                 return;
-            }
 
             BluetoothGattCharacteristic c =
                     gatt.getService(UUID_SERVICE).getCharacteristic(UUID_TIME_MEASUREMENT);
 
             if (c == null) {
-                Log.w(TAG, "onServiceDiscovered TIME characteristics UUID not found!");
+                Log.d(TAG, "onServiceDiscovered TIME characteristics UUID not found!");
                 return;
             }
 
@@ -119,17 +116,16 @@ public class LighterBluetoothService extends Service {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic c) {
-            Log.w(TAG, "characteristics changed ");
+            Log.d(TAG, "characteristics changed ");
 
             long send_time = c.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32, 0),
                  evnt_time = c.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32, 4),
                  diff = send_time - evnt_time;
 
             Date date = new Date(System.currentTimeMillis() - diff);
-            Log.w(TAG, "got event at " + date + " " + Thread.currentThread().getName());
+            Log.d(TAG, "got event at " + date + " " + Thread.currentThread().getName());
 
-            Location location = null; // XXX
-            mEventList.add( new CigaretteEvent(date, "lighter", location) );
+            mEventList.add( new CigaretteEvent(date, "lighter", null) );
         }
     };
 
@@ -168,7 +164,6 @@ public class LighterBluetoothService extends Service {
                         default:
                             break;
                     }
-                    close();
                 }
             };
 
@@ -232,8 +227,7 @@ public class LighterBluetoothService extends Service {
 
         /** start to scan for LE devices in the area */
         mHandler = new Handler(Looper.getMainLooper());
-        mScanStartDelay = PreferenceManager.getDefaultSharedPreferences(this).getLong(KEY_SCANSTARTDELAY, 20 * 1000);
-        mHandler.postDelayed(rStartLEScan, 10);
+        mHandler.post(rStartLEScan);
 
         return START_STICKY;
     }
@@ -253,55 +247,6 @@ public class LighterBluetoothService extends Service {
     }
     private final IBinder mBinder = new LocalBinder();
 
-    public boolean connect(final String address) {
-        if (mBluetoothAdapter == null || address == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.");
-            return false;
-        }
-
-        // Previously connected device.  Try to reconnect.
-        if (mBluetoothDeviceAddress != null &&
-            address.equals(mBluetoothDeviceAddress) &&
-            mBluetoothGatt != null) {
-            Log.d(TAG, "Trying to use an existing mBluetoothGatt for connection.");
-            return true;
-        }
-
-        final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-        if (device == null) {
-            Log.w(TAG, "Device not found.  Unable to connect.");
-            return false;
-        }
-        // use auto-connect, whenever possible
-        mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
-
-        Log.d(TAG, "Trying to create a new connection. ");
-        mBluetoothDeviceAddress = address;
-        return true;
-    }
-
-    public void disconnect() {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
-        mBluetoothGatt.disconnect();
-    }
-
-    public void close() {
-        Log.e(TAG, "connection closed.");
-
-        if (mBluetoothGatt == null) {
-            return;
-        }
-
-        mBluetoothGatt.close();
-        mBluetoothGatt = null;
-
-        // start a new scan immediately
-        mHandler.postDelayed(rStartLEScan, 10);
-    }
-
     private Runnable rStartLEScan = new Runnable() {
         @Override
         public void run() {
@@ -314,13 +259,13 @@ public class LighterBluetoothService extends Service {
         new BluetoothAdapter.LeScanCallback() {
             public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
                 // just make sure we don't hang
-                mHandler.removeCallbacks(rStartLEScan);
-                mHandler.postDelayed(rStartLEScan, mScanStartDelay);
+                //mHandler.removeCallbacks(rStartLEScan);
+                //mHandler.postDelayed(rStartLEScan, 20*1000);
 
                 if (device.getName() == null)
                     return;
 
-                Log.i(TAG, "found device " + device.getName() + " with rssi" + rssi);
+                Log.d(TAG, "found device " + device.getName() + " with rssi" + rssi);
 
                 if (!device.getName().contains("iLitIt"))
                     return; // must be something else
@@ -335,19 +280,21 @@ public class LighterBluetoothService extends Service {
                             putString(KEY_DEVICEADDR, mBluetoothDeviceAddress).apply();
                 }
 
-                final String addr = device.getAddress();
                 mHandler.post(new Runnable() { // SAMSUNG workaround
                     @Override
                     public void run() {
-                        if ( connect(mBluetoothDeviceAddress) ) {
-                            Log.w(TAG, "stopping the scan, found connectable device " + addr);
-                            mBluetoothAdapter.stopLeScan(mFindLighterDevice);
-                        }
+                        if (mBluetoothGatt!=null)
+                            Log.d(TAG, "previous connection still active?!");
+
+                        Log.d(TAG, "stopping the scan, found connectable device " +
+                                   mBluetoothDeviceAddress);
+                        mBluetoothAdapter.stopLeScan(mFindLighterDevice);
+
+                        mBluetoothGatt =
+                                mBluetoothAdapter.getRemoteDevice(mBluetoothDeviceAddress)
+                                .connectGatt(LighterBluetoothService.this, true, rGattCallback);
                     }
                 });
-
-
-                //mHandler.postDelayed(stopLEScan, timeout_ms)
             }
     };
 
