@@ -41,6 +41,8 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.LocationClient;
 
+import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
 
@@ -284,8 +286,10 @@ public class LighterBluetoothService extends Service {
                             putString(KEY_DEVICEADDR, mBluetoothDeviceAddress).apply();
                 }
 
+                String batstr = "";
                 try {
-                    mLastBatteryVoltage = Double.parseDouble(scanRecord.toString());
+                    batstr = new String(Arrays.copyOfRange(scanRecord, 22, 22+4), "utf-8");
+                    mLastBatteryVoltage = Double.parseDouble(batstr) / 1000.;
                     mHandler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -293,7 +297,7 @@ public class LighterBluetoothService extends Service {
                         }
                     });
                 } catch (Exception e) {
-                    Log.d(TAG, "unable to parse advertisment data " + scanRecord.toString());
+                    Log.d(TAG, "unable to parse advertisement data " + batstr);
                 }
 
                 mHandler.post(new Runnable() { // SAMSUNG workaround
