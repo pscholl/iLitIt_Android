@@ -73,9 +73,6 @@ public class HeatMapFragment extends SupportMapFragment implements MainActivity.
         double max_lat = Double.NEGATIVE_INFINITY, max_lon = Double.NEGATIVE_INFINITY,
                 min_lat = Double.POSITIVE_INFINITY, min_lon = Double.POSITIVE_INFINITY;
 
-        if (mModel.size() < 3)
-            return;
-
         for (CigaretteEvent e : mModel) {
             if (e.where == null)
                 continue;

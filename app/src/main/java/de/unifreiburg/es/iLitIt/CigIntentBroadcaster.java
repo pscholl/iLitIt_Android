@@ -19,13 +19,11 @@ public class CigIntentBroadcaster implements ObservableLinkedList.Observer<Cigar
     private static final String ACTION_REM = "de.unifreiburg.es.iLitIt.REM_CIG";
     private static final String ACTION_CLR = "de.unifreiburg.es.iLitIt.CLR";
     private final String TAG = this.getClass().getSimpleName();
-    private final Context mContext;
-    private final Handler mHandler;
+    public Context mContext;
     private int mNumCigarettes = 0;
 
     CigIntentBroadcaster(Context c) {
         mContext = c;
-        mHandler = new Handler(Looper.getMainLooper());
         mNumCigarettes = 0;
     }
 
@@ -62,6 +60,7 @@ public class CigIntentBroadcaster implements ObservableLinkedList.Observer<Cigar
         { // ignore changes to a cigs inside the model
             return;
         }
+
 
         mContext.sendBroadcast(i);
         Log.d(TAG, "send intent " + i.toString());

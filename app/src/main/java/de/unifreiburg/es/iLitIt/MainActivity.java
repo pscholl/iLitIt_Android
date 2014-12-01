@@ -60,6 +60,10 @@ public class MainActivity extends FragmentActivity {
             mModel.register(rCigAnnotationWriter);
             mModel.register(rCigIntentBroadcaster);
 
+            if (getSupportFragmentManager()==null ||
+                getSupportFragmentManager().getFragments() == null)
+                return;
+
             // give fragments access to the data
             for (Fragment f : getSupportFragmentManager().getFragments()) {
                 try {
