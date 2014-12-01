@@ -59,6 +59,8 @@ public class LighterBluetoothService extends Service {
     private String mBluetoothDeviceAddress;
     private BluetoothGatt mBluetoothGatt;
     private Handler mHandler;
+    private final CigAnnotationWriter rCigAnnotationWriter = new CigAnnotationWriter(this);
+    private final CigIntentBroadcaster rCigIntentBroadcaster = new CigIntentBroadcaster(this);
 
     public final static UUID UUID_SERVICE =
             UUID.fromString("595403fb-f50e-4902-a99d-b39ffa4bb134");
@@ -219,6 +221,10 @@ public class LighterBluetoothService extends Service {
         /** load the stored events */
         if (mEventList==null) {
             mEventList = CigAnnotationWriter.readCigaretteList(this);
+
+            mEventList.register(rCigAnnotationWriter);
+            mEventList.register(rCigIntentBroadcaster);
+
         }
 
         /** set-up the location service, we need this to run here, since we need to
