@@ -81,7 +81,7 @@ public class HeatMapFragment extends SupportMapFragment implements MainActivity.
                 continue;
 
             double lat = e.where.getLatitude(),
-                    lon = e.where.getLongitude();
+                   lon = e.where.getLongitude();
 
             Log.d(TAG, "lat: " + lat + " lon: " + lon);
 
@@ -91,13 +91,17 @@ public class HeatMapFragment extends SupportMapFragment implements MainActivity.
             if (lon < min_lon) min_lon = lon;
         }
 
-        LatLng sw = new LatLng(min_lat, min_lon),
-                ne = new LatLng(max_lat, max_lon);
+        try {
+            LatLng sw = new LatLng(min_lat, min_lon),
+                    ne = new LatLng(max_lat, max_lon);
 
-        Log.d(TAG, "sw: " + sw.toString() + " ne: " + ne.toString());
+            Log.d(TAG, "sw: " + sw.toString() + " ne: " + ne.toString());
 
-        mMap.animateCamera(
-                CameraUpdateFactory.newLatLngBounds(new LatLngBounds(sw, ne), 150));
+            mMap.animateCamera(
+                    CameraUpdateFactory.newLatLngBounds(new LatLngBounds(sw, ne), 150));
+        } catch(IllegalArgumentException e) {
+            Log.d(TAG, "positions for events not known yet");
+        }
     }
 
     @Override
