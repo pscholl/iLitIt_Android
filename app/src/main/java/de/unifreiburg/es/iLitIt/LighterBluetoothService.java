@@ -29,7 +29,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.location.Location;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -236,6 +235,10 @@ public class LighterBluetoothService extends Service {
         return mEventList;
     }
 
+    public double get_bat_voltage() {
+        return mLastBatteryVoltage;
+    }
+
     public class LocalBinder extends Binder {
         LighterBluetoothService getService() {
             return LighterBluetoothService.this;
@@ -255,6 +258,7 @@ public class LighterBluetoothService extends Service {
         }
     };
 
+    private double mLastBatteryVoltage = 0.0;
     private final BluetoothAdapter.LeScanCallback mFindLighterDevice =
         new BluetoothAdapter.LeScanCallback() {
             public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
@@ -278,6 +282,18 @@ public class LighterBluetoothService extends Service {
                     mBluetoothDeviceAddress = device.getAddress();
                     PreferenceManager.getDefaultSharedPreferences(LighterBluetoothService.this).edit().
                             putString(KEY_DEVICEADDR, mBluetoothDeviceAddress).apply();
+                }
+
+                try {
+                    mLastBatteryVoltage = Double.parseDouble(scanRecord.toString());
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mEventList.fireEvent(null);
+                        }
+                    });
+                } catch (Exception e) {
+                    Log.d(TAG, "unable to parse advertisment data " + scanRecord.toString());
                 }
 
                 mHandler.post(new Runnable() { // SAMSUNG workaround

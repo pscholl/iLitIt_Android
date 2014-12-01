@@ -36,8 +36,37 @@
         android:layout_height="wrap_content"
         android:text="@string/clear_all_data"
         android:id="@+id/cleardatabutton"
-        android:layout_below="@+id/linearLayout5"
         android:layout_centerHorizontal="true"
-        android:paddingTop="@dimen/list_margin" />
+        android:paddingTop="@dimen/list_margin"
+        android:layout_below="@+id/linealayout6" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/linearLayout5"
+        android:id="@+id/linealayout6"
+        android:layout_centerHorizontal="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="last battery voltage:"
+            android:id="@+id/textView7"
+            android:layout_alignTop="@+id/linealayout6"
+            android:layout_centerHorizontal="true"
+            android:layout_gravity="center_horizontal" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="0.0V"
+            android:id="@+id/batteryVoltage"
+            android:layout_below="@+id/linearLayout5"
+            android:layout_centerHorizontal="true"
+            android:layout_gravity="center_horizontal" />
+    </LinearLayout>
 
 </RelativeLayout>

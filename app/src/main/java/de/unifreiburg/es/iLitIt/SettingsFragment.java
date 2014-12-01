@@ -21,6 +21,7 @@ public class SettingsFragment extends Fragment implements MainActivity.MyFragmen
     private Button mClear;
     private TextView mMacAddr;
     private View mRootView = null;
+    private TextView mBatVolt = null;
 
     private DelayedObserver rUpdateFields = new DelayedObserver(10, new Runnable() {
         @Override
@@ -31,6 +32,10 @@ public class SettingsFragment extends Fragment implements MainActivity.MyFragmen
             if (mMacAddr==null)
                 mMacAddr = (TextView) mRootView.findViewById(R.id.macaddr);
 
+            if (mBatVolt==null)
+                mBatVolt = (TextView) mRootView.findViewById(R.id.batteryVoltage);
+
+            mBatVolt.setText(String.format("%.4fV", mServiceconnection.get_bat_voltage()));
             mMacAddr.setText(mServiceconnection.get_mac_addr());
         }
     });
