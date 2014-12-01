@@ -65,7 +65,39 @@ public class HeatMapFragment extends SupportMapFragment implements MainActivity.
         if (getMap()!=null)
             mMap = getMap();
 
+        mMap.setPadding(40, 0, 40, 0);
         return v;
+    }
+
+    public void focusOnModel() {
+        double max_lat = Double.NEGATIVE_INFINITY, max_lon = Double.NEGATIVE_INFINITY,
+                min_lat = Double.POSITIVE_INFINITY, min_lon = Double.POSITIVE_INFINITY;
+
+        if (mModel.size() < 3)
+            return;
+
+        for (CigaretteEvent e : mModel) {
+            if (e.where == null)
+                continue;
+
+            double lat = e.where.getLatitude(),
+                    lon = e.where.getLongitude();
+
+            Log.d(TAG, "lat: " + lat + " lon: " + lon);
+
+            if (lat > max_lat) max_lat = lat;
+            if (lat < min_lat) min_lat = lat;
+            if (lon > max_lon) max_lon = lon;
+            if (lon < min_lon) min_lon = lon;
+        }
+
+        LatLng sw = new LatLng(min_lat, min_lon),
+                ne = new LatLng(max_lat, max_lon);
+
+        Log.d(TAG, "sw: " + sw.toString() + " ne: " + ne.toString());
+
+        mMap.animateCamera(
+                CameraUpdateFactory.newLatLngBounds(new LatLngBounds(sw, ne), 150));
     }
 
     @Override
@@ -81,36 +113,25 @@ public class HeatMapFragment extends SupportMapFragment implements MainActivity.
             mMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
                 @Override
                 public void onCameraChange(CameraPosition cameraPosition) {
-                    double max_lat = Double.NEGATIVE_INFINITY, max_lon = Double.NEGATIVE_INFINITY,
-                            min_lat = Double.POSITIVE_INFINITY, min_lon = Double.POSITIVE_INFINITY;
-
-                    for (CigaretteEvent e : mModel) {
-                        if (e.where == null)
-                            continue;
-
-                        double lat = e.where.getLatitude(),
-                               lon = e.where.getLongitude();
-
-                        Log.d(TAG, "lat: " + lat + " lon: " + lon);
-
-                        if (lat > max_lat) max_lat = lat;
-                        if (lat < min_lat) min_lat = lat;
-                        if (lon > max_lon) max_lon = lon;
-                        if (lon < min_lon) min_lon = lon;
-                    }
-
-                    LatLng sw = new LatLng(min_lat, min_lon),
-                           ne = new LatLng(max_lat, max_lon);
-
-                    Log.d(TAG, "sw: " + sw.toString() + " ne: " + ne.toString());
-
-                    mMap.animateCamera(
-                            CameraUpdateFactory.newLatLngBounds(new LatLngBounds(sw, ne), 150));
+                    focusOnModel();
                     mMap.setOnCameraChangeListener(null);
-                    rUpdateView.mAction.run();
                 }
             });
         }
+
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                focusOnModel();
+            }
+        });
+
+        mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+            @Override
+            public void onMapLoaded() {
+                rUpdateView.mAction.run();
+            }
+        });
     }
 
     @Override
