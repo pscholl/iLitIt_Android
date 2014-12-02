@@ -16,6 +16,8 @@
 
 package de.unifreiburg.es.iLitIt;
 
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -35,6 +37,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -53,6 +56,8 @@ import java.util.UUID;
 public class LighterBluetoothService extends Service {
     private final static String TAG = LighterBluetoothService.class.getSimpleName();
     public static final String KEY_DEVICEADDR = "device_addr";
+    private static final int PROGRESS_ID = 0;
+    private static final int BATLOW_ID = 1;
     private BroadcastReceiver mSmartWatchAnnotationReceiver =  null;
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
@@ -145,6 +150,8 @@ public class LighterBluetoothService extends Service {
 
     private BroadcastReceiver mBluetoothChangeReceiver;
     private LocationClient mLocationClient;
+    private Notification mNotification;
+    private Notification mLowBatteryWarning;
 
     public void clear_mac_addr() {
         mBluetoothDeviceAddress = null;
@@ -247,6 +254,21 @@ public class LighterBluetoothService extends Service {
         mHandler = new Handler(Looper.getMainLooper());
         mHandler.post(rStartLEScan);
 
+        /** create a notification on a pending connection */
+        mNotification = (new NotificationCompat.Builder(this))
+                .setContentText("downloading cigarette events")
+                .setContentTitle("iLitIt")
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setProgress(0,0,true)
+                .setAutoCancel(true)
+                .build();
+
+        mLowBatteryWarning = (new NotificationCompat.Builder(this))
+                .setContentTitle("iLitIt - battery low")
+                .setContentText("replace battery as soons as possible")
+                .setSmallIcon(R.drawable.ic_launcher)
+                .build();
+
         return START_STICKY;
     }
 
@@ -256,6 +278,10 @@ public class LighterBluetoothService extends Service {
 
     public double get_bat_voltage() {
         return mLastBatteryVoltage;
+    }
+
+    public boolean is_bat_empty() {
+        return mBatteryEmpty;
     }
 
     public class LocalBinder extends Binder {
@@ -272,12 +298,14 @@ public class LighterBluetoothService extends Service {
     private Runnable rStartLEScan = new Runnable() {
         @Override
         public void run() {
+            ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).cancel(PROGRESS_ID);
             Log.i(TAG, "starting LE/Lighter Scan.");
             mBluetoothAdapter.startLeScan(mFindLighterDevice);
         }
     };
 
     private double mLastBatteryVoltage = 0.0;
+    private boolean mBatteryEmpty = false;
     private final BluetoothAdapter.LeScanCallback mFindLighterDevice =
         new BluetoothAdapter.LeScanCallback() {
             public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
@@ -303,10 +331,24 @@ public class LighterBluetoothService extends Service {
                             putString(KEY_DEVICEADDR, mBluetoothDeviceAddress).apply();
                 }
 
-                String batstr = "";
                 try {
-                    batstr = new String(Arrays.copyOfRange(scanRecord, 22, 22+4), "utf-8");
-                    mLastBatteryVoltage = Double.parseDouble(batstr) / 1000.;
+                    int offset = 0;
+                    while (offset < scanRecord.length-1) {
+                        int len = (int) scanRecord[offset] & 0xff,
+                            typ = (int) scanRecord[offset+1] & 0xff;
+
+                        if (typ == 0xff)
+                            break; // manufacturer data
+
+                        offset += len+1;
+                    }
+
+                    String s, ss[];
+                    s = new String(Arrays.copyOfRange(scanRecord, offset+2, scanRecord.length), "utf-8");
+                    ss = s.split(" ");
+
+                    mLastBatteryVoltage = Double.parseDouble(ss[0]) / 1000.;
+                    mBatteryEmpty = ss.length > 1 ? ss[1].contains("empty") : false;
                     mHandler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -314,7 +356,7 @@ public class LighterBluetoothService extends Service {
                         }
                     });
                 } catch (Exception e) {
-                    Log.d(TAG, "unable to parse advertisement data " + batstr);
+                    Log.d(TAG, "unable to parse advertisement data", e);
                 }
 
                 mHandler.post(new Runnable() { // SAMSUNG workaround
@@ -330,6 +372,16 @@ public class LighterBluetoothService extends Service {
                         mBluetoothGatt =
                                 mBluetoothAdapter.getRemoteDevice(mBluetoothDeviceAddress)
                                 .connectGatt(LighterBluetoothService.this, true, rGattCallback);
+
+                        ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).
+                                notify(PROGRESS_ID, mNotification);
+
+                        if (is_bat_empty())
+                            ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).
+                                    notify(BATLOW_ID, mLowBatteryWarning);
+                        else
+                            ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).
+                                    cancel(BATLOW_ID);
                     }
                 });
             }

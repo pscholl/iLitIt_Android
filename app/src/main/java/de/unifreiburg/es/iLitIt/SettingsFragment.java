@@ -35,7 +35,9 @@ public class SettingsFragment extends Fragment implements MainActivity.MyFragmen
             if (mBatVolt==null)
                 mBatVolt = (TextView) mRootView.findViewById(R.id.batteryVoltage);
 
-            mBatVolt.setText(String.format("%.4fV", mServiceconnection.get_bat_voltage()));
+            mBatVolt.setText(String.format("%.2fV%s",
+                    mServiceconnection.get_bat_voltage(),
+                    mServiceconnection.is_bat_empty() ? "(empty)" : ""));
             mMacAddr.setText(mServiceconnection.get_mac_addr());
         }
     });

@@ -31,16 +31,20 @@ public class StatsHelper {
     }
 
     public static String tracking_since(List<CigaretteEvent> mModel) {
-        if (mModel.size()==0)
+        try {
+            return time_diff(new Date(), mModel.get(0).when);
+        } catch (Exception e) {
             return "never";
-        return time_diff(new Date(), mModel.get(0).when);
+        }
     }
 
 
     public static String last_cigarette_at(List<CigaretteEvent> mModel) {
-        if (mModel.size()==0)
+        try {
+            return time_diff(new Date(), mModel.get(mModel.size()-1).when);
+        } catch (Exception e) {
             return "never";
-        return time_diff(new Date(), mModel.get(mModel.size()-1).when);
+        }
     }
 
     public static double current_nicotine(List<CigaretteEvent> mModel) {

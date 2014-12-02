@@ -1,5 +1,8 @@
 package de.unifreiburg.es.iLitIt;
 
+import android.graphics.Color;
+import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.w3c.dom.Text;
@@ -51,13 +55,13 @@ public class HomescreenFragment extends Fragment implements  MainActivity.MyFrag
 
             nicotine.setText(String.format("%.2f", StatsHelper.current_nicotine(mModel)));
             mean.setText(String.format("%.2f", StatsHelper.mean_cigs_per_day(mModel)));
-
         }
     };
+    private LighterBluetoothService mBluetoothService;
 
     @Override
     public void setBluetoothService(LighterBluetoothService service) {
-
+        mBluetoothService = service;
     }
 
     @Override
