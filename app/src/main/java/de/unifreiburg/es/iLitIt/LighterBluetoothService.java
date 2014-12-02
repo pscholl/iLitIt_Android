@@ -31,6 +31,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -58,6 +59,8 @@ public class LighterBluetoothService extends Service {
     public static final String KEY_DEVICEADDR = "device_addr";
     private static final int PROGRESS_ID = 0;
     private static final int BATLOW_ID = 1;
+    private static final String KEY_BATEMTPY = "bat_emtpy";
+    private static final String KEY_BATVOLTAGE = "bat_voltage";
     private BroadcastReceiver mSmartWatchAnnotationReceiver =  null;
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
@@ -233,6 +236,10 @@ public class LighterBluetoothService extends Service {
         /** check if we are already bound to a device, if not start scanning for one */
         mBluetoothDeviceAddress = PreferenceManager.getDefaultSharedPreferences(this).
                 getString(KEY_DEVICEADDR, null);
+        mLastBatteryVoltage = PreferenceManager.getDefaultSharedPreferences(this).
+                getFloat(KEY_BATVOLTAGE, 0.0f);
+        mBatteryEmpty = PreferenceManager.getDefaultSharedPreferences(this).
+                getBoolean(KEY_BATEMTPY, false);
 
         super.onStartCommand(intent, flags, startId);
 
@@ -349,6 +356,13 @@ public class LighterBluetoothService extends Service {
 
                     mLastBatteryVoltage = Double.parseDouble(ss[0]) / 1000.;
                     mBatteryEmpty = ss.length > 1 ? ss[1].contains("empty") : false;
+
+                    PreferenceManager.
+                            getDefaultSharedPreferences(LighterBluetoothService.this)
+                            .edit()
+                            .putBoolean(KEY_BATEMTPY, mBatteryEmpty)
+                            .putFloat(KEY_BATVOLTAGE, (float) mLastBatteryVoltage);
+
                     mHandler.post(new Runnable() {
                         @Override
                         public void run() {
