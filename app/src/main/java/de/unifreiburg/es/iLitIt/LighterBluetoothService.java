@@ -108,9 +108,20 @@ public class LighterBluetoothService extends Service {
                 return;
             }
 
+            // attempting to read characteristic
+            boolean r = gatt.readCharacteristic(c);
+            Log.d(TAG, "attempted read " + r);
+        }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            Log.d(TAG, "onCharactersiticRead " + status);
+
             // subscribing
-            gatt.setCharacteristicNotification(c, true);
-            BluetoothGattDescriptor config = c.getDescriptor(UUID_CCC);
+            boolean rw_ = gatt.setCharacteristicNotification(characteristic, true);
+            Log.d(TAG, "attempting to set char notification: " + rw_);
+
+            BluetoothGattDescriptor config = characteristic.getDescriptor(UUID_CCC);
             config.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             boolean rw = gatt.writeDescriptor(config);
             Log.d(TAG, "attempting to subscribe characteristic " + rw);
