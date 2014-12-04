@@ -66,12 +66,28 @@ public class HeatMapFragment extends SupportMapFragment implements MainActivity.
             mMap = getMap();
 
         mMap.setPadding(40, 0, 40, 0);
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                focusOnModel();
+            }
+        });
+        mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+            @Override
+            public void onMapLoaded() {
+                focusOnModel();
+                rUpdateView.mAction.run();
+            }
+        });
         return v;
     }
 
     public void focusOnModel() {
         double max_lat = Double.NEGATIVE_INFINITY, max_lon = Double.NEGATIVE_INFINITY,
-                min_lat = Double.POSITIVE_INFINITY, min_lon = Double.POSITIVE_INFINITY;
+               min_lat = Double.POSITIVE_INFINITY, min_lon = Double.POSITIVE_INFINITY;
+
+        if (mModel == null)
+            return;
 
         for (CigaretteEvent e : mModel) {
             if (e.where == null)
@@ -109,30 +125,6 @@ public class HeatMapFragment extends SupportMapFragment implements MainActivity.
 
         mModel = cigaretteEvents;
         mModel.register(rUpdateView);
-
-        if (mModel.size() > 2) {
-            mMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
-                @Override
-                public void onCameraChange(CameraPosition cameraPosition) {
-                    focusOnModel();
-                    mMap.setOnCameraChangeListener(null);
-                }
-            });
-        }
-
-        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
-            @Override
-            public void onMapLongClick(LatLng latLng) {
-                focusOnModel();
-            }
-        });
-
-        mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
-            @Override
-            public void onMapLoaded() {
-                rUpdateView.mAction.run();
-            }
-        });
     }
 
     @Override
