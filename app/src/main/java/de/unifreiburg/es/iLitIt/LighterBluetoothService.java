@@ -18,6 +18,7 @@ package de.unifreiburg.es.iLitIt;
 
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -262,12 +263,14 @@ public class LighterBluetoothService extends Service {
         mHandler.post(rStartLEScan);
 
         /** create a notification on a pending connection */
+        PendingIntent i = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
         mNotification = (new NotificationCompat.Builder(this))
                 .setContentText("downloading cigarette events")
                 .setContentTitle("iLitIt")
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setProgress(0,0,true)
                 .setAutoCancel(true)
+                .setContentIntent(i)
                 .build();
 
         mLowBatteryWarning = (new NotificationCompat.Builder(this))
