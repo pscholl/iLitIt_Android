@@ -47,6 +47,9 @@ public class HeatMapFragment extends SupportMapFragment implements MainActivity.
                 return;
             }
 
+            if (mMap == null)
+                return;
+
             if (mProvider == null) {
                 mProvider = new HeatmapTileProvider.Builder().data(latlng).build();
                 mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
@@ -80,6 +83,12 @@ public class HeatMapFragment extends SupportMapFragment implements MainActivity.
             }
         });
         return v;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mModel != null) mModel.unregister(rUpdateView);
     }
 
     public void focusOnModel() {

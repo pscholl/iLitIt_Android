@@ -361,7 +361,8 @@ public class LighterBluetoothService extends Service {
                             getDefaultSharedPreferences(LighterBluetoothService.this)
                             .edit()
                             .putBoolean(KEY_BATEMTPY, mBatteryEmpty)
-                            .putFloat(KEY_BATVOLTAGE, (float) mLastBatteryVoltage);
+                            .putFloat(KEY_BATVOLTAGE, (float) mLastBatteryVoltage)
+                            .commit();
 
                     mHandler.post(new Runnable() {
                         @Override

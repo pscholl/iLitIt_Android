@@ -69,6 +69,12 @@ public class JournalFragment extends Fragment implements MainActivity.MyFragment
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mModel!=null) mModel.unregister(rUpdateFields);
+    }
+
+    @Override
     public void setModel(ObservableLinkedList<CigaretteEvent> list) {
         if (list != null) list.unregister(rUpdateFields);
         mModel = list;

@@ -32,7 +32,7 @@ public class SettingsFragment extends Fragment implements MainActivity.MyFragmen
             mBatVolt.setText(String.format("%.2fV%s",
                     mServiceconnection.get_bat_voltage(),
                     mServiceconnection.is_bat_empty() ? "(empty)" : ""));
-            mBatVolt.postInvalidate();
+
             mMacAddr.setText(mServiceconnection.get_mac_addr());
         }
     });
@@ -68,6 +68,12 @@ public class SettingsFragment extends Fragment implements MainActivity.MyFragmen
         if (mModel!=null) mModel.unregister(rUpdateFields);
         mModel = list;
         mModel.register(rUpdateFields);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mModel!=null) mModel.unregister(rUpdateFields);
     }
 
     @Override
