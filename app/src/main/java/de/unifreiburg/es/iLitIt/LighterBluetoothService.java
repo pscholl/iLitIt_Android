@@ -267,7 +267,7 @@ public class LighterBluetoothService extends Service {
         mNotification = (new NotificationCompat.Builder(this))
                 .setContentText("downloading cigarette events")
                 .setContentTitle("iLitIt")
-                .setSmallIcon(R.drawable.ic_launcher)
+                .setSmallIcon(R.drawable.ic_cigarette_black)
                 .setProgress(0,0,true)
                 .setAutoCancel(true)
                 .setContentIntent(i)
